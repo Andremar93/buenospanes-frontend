@@ -18,6 +18,7 @@ const options = [
 const HomeScreen: React.FC = () => {
 	const router = useRouter();
 	const exchangeRate = useExchangeRate();
+	console.log("from principal menu", exchangeRate);
 	const { user } = useUser();
 	const handlePress = (screen: (typeof options)[number]["screen"]) => {
 		router.push(screen);
@@ -43,7 +44,7 @@ const HomeScreen: React.FC = () => {
 			</ThemedView>
 			<ThemedText type="subtitle">
 				Tasa del día:{" "}
-				{exchangeRate.exchangeRate !== null
+				{exchangeRate?.exchangeRate
 					? `Bs. ${exchangeRate.exchangeRate}`
 					: "No disponible"}
 			</ThemedText>

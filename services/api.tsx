@@ -10,22 +10,12 @@ const api = axios.create({
 export const login = async (username: string, password: string) => {
 	try {
 		const loginResponse = await api.post("/login", { username, password });
-		const selectedDate = new Date(); // Obtener fecha actual
-		selectedDate.setUTCHours(selectedDate.getUTCHours() - 4); // Ajustar a UTC-4 (Venezuela)
-		const formattedDate = selectedDate.toISOString().split("T")[0];
-
-		const exchangeRateResponse = await api.get(
-			`/exchange-rate/get/${formattedDate}`,
-		);
-		if (exchangeRateResponse.status === 204) {
-			return { ...loginResponse.data, redirectToSetExchangeRate: true };
-		}
 
 		return {
 			...loginResponse.data,
-			exchangeRate: exchangeRateResponse.data,
 		};
 	} catch (error) {
+		console.log(error);
 		throw new Error("Error during login");
 	}
 };

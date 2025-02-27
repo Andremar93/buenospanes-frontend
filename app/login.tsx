@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, Alert, TouchableOpacity, Text, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { useUser } from "@/contexts/UserContext";
-import { login } from "../services/api";
+import { useExchangeRate } from "@/contexts/ExchangeRateContext";
+import { login, getExchangeRateByDate } from "../services/api";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedTextInput } from "@/components/ThemedTextInput";
@@ -18,8 +19,8 @@ const LoginForm: React.FC = () => {
 
 	useEffect(() => {
 		const checkLoginStatus = async () => {
-			console.log("checkLoginStatus", user);
-			console.log("user on login", user);
+			//console.log("checkLoginStatus", user);
+			//console.log("user on login", user);
 			if (user.token) {
 				router.replace("/PrincipalMenu");
 			}
@@ -38,14 +39,18 @@ const LoginForm: React.FC = () => {
 			const userData = { username, token: response.token };
 
 			setUser(userData);
-			console.log("userData", userData);
+			console.log("loginresponse", response);
 
-			if (response.redirectToSetExchangeRate) {
-				Alert.alert(
-					"Éxito",
-					"Por favor establecer la tasa del día de hoy",
-				);
-				router.replace("/SetExchangeRate"); // Redirigir al home si ya está logueado
+			const selectedDate = new Date(); // Obtener fecha actual
+			selectedDate.setUTCHours(selectedDate.getUTCHours() - 4); // Ajustar a UTC-4 (Venezuela)
+			const formattedDate = selectedDate.toISOString().split("T")[0];
+
+			const exchangeRate = await getExchangeRateByDate(formattedDate);
+
+			console.log("useExchangeRate", exchangeRate);
+
+			if (exchangeRate) {
+				router.replace("/SetExchangeRate");
 				// Redirigir a la pantalla de tasa
 			} else {
 				Alert.alert("Éxito", "Inicio de sesión exitoso");

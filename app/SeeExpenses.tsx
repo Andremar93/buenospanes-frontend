@@ -2,6 +2,7 @@ import React from "react";
 import { Text, StyleSheet, FlatList, View } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { getExpenses } from "@/services/api";
+import { ThemedText } from "@/components/ThemedText";
 
 const SeeExpenses: React.FC = () => {
 	const [expenses, setExpenses] = React.useState([]);
@@ -11,7 +12,7 @@ const SeeExpenses: React.FC = () => {
 			try {
 				const expensesData = await getExpenses();
 				setExpenses(expensesData);
-				console.log("expensesData", expensesData);
+				//console.log("expensesData", expensesData);
 			} catch (error) {
 				console.error("Error fetching expenses:", error);
 			}
@@ -60,12 +61,17 @@ const SeeExpenses: React.FC = () => {
 
 	return (
 		<ThemedView style={[styles.container]}>
-			<FlatList
-				data={expenses}
-				keyExtractor={(item) => item._id}
-				renderItem={renderExpense}
-				style={{ width: "100%" }}
-			/>
+			<ThemedView>
+				<ThemedText>PRoBABLY A FILTER HERE</ThemedText>
+			</ThemedView>
+			<ThemedView>
+				<FlatList
+					data={expenses}
+					keyExtractor={(item) => item._id}
+					renderItem={renderExpense}
+					style={{ width: "100%" }}
+				/>
+			</ThemedView>
 		</ThemedView>
 	);
 };
@@ -77,6 +83,7 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		paddingTop: 20,
 		paddingHorizontal: 20,
+		width: "100%",
 	},
 	card: {
 		backgroundColor: "#f8f8f8",

@@ -83,7 +83,7 @@ const CreateInvoice: React.FC = () => {
 			)}
 
 			{/* Selección de moneda (Bs o $) */}
-			<ThemedText align="flex-start">Tipo de moneda</ThemedText>
+			<ThemedText align="flex-start">Tipo de moneda:</ThemedText>
 			<ThemedView style={styles.buttonGroup}>
 				<TouchableOpacity
 					style={[

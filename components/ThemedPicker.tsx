@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Platform } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useThemeColor } from "@/hooks/useThemeColor";
 
@@ -73,8 +73,12 @@ const styles = StyleSheet.create({
 		borderRadius: 4,
 	},
 	picker: {
-		height: 40,
+		height: Platform.OS === "ios" ? 50 : 50,
 		width: "100%",
+		paddingHorizontal: 10,
+		borderWidth: 1,
+		borderColor: "#ccc",
+		borderRadius: 5,
 	},
 	outlined: {
 		borderWidth: 2,

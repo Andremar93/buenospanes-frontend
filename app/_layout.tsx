@@ -92,6 +92,14 @@ export default function RootLayout() {
 							}}
 						/>
 						<Stack.Screen
+							name="IncomeMenu"
+							options={{
+								headerShown: true,
+								headerTitle: "Ingresos",
+								headerRight: () => <LogoutButton />, // Botón de logout en el header
+							}}
+						/>
+						<Stack.Screen
 							name="PrincipalMenu"
 							options={{
 								headerShown: true,

@@ -8,9 +8,9 @@ import { useRouter } from "expo-router";
 import { useExchangeRate } from "@/contexts/ExchangeRateContext";
 
 const SetExchangeRate: React.FC = () => {
-	console.log("EXHANGERATEPAGE");
 	const router = useRouter();
-	const { setExchangeRate } = useExchangeRate();
+	const { setExchangeRate, exchangeRate } = useExchangeRate();
+	console.log("EXHANGERATEPAGE", exchangeRate);
 	const {
 		control,
 		handleSubmit,
@@ -21,7 +21,7 @@ const SetExchangeRate: React.FC = () => {
 		const rateData = {
 			...data,
 		};
-
+		console.log(data);
 		const newRate = parseFloat(data.rate);
 		if (isNaN(newRate) || newRate <= 0) {
 			Alert.alert("Error", "Ingrese un valor válido para la tasa");
@@ -32,6 +32,7 @@ const SetExchangeRate: React.FC = () => {
 		createExchangeRate(rateData)
 			.then((response) => {
 				setExchangeRate(newRate);
+				console.log("newRate", newRate);
 				Alert.alert(
 					"Tasa Seteada",
 					"La tasa ha sido registrado correctamente",
@@ -59,6 +60,7 @@ const SetExchangeRate: React.FC = () => {
 						onBlur={onBlur}
 						onChangeText={onChange}
 						value={value ?? ""}
+						onEndEditing={() => console.log("Edición finalizada")}
 					/>
 				)}
 				name="rate"
