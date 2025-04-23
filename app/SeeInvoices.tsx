@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
 	Text,
 	StyleSheet,
@@ -6,25 +6,21 @@ import {
 	View,
 	TouchableOpacity,
 	Platform,
+	Alert,
 } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
 import { getInvoices, createExpenseByInvoice } from "@/services/api";
-import DateTimePicker from "@react-native-community/datetimepicker"; // Importar el DateTimePicker
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const SeeInvoices: React.FC = () => {
 	const [invoices, setInvoices] = useState<any[]>([]);
 	const [expandedInvoices, setExpandedInvoices] = useState<{
 		[key: string]: boolean;
 	}>({});
-	const [paymentDate, setPaymentDate] = useState<Date | null>(null); // Estado para la fecha de pago
-	const [showDatePicker, setShowDatePicker] = useState<boolean>(false); // Para mostrar el selector de fecha
-
-	const toggleInvoice = (invoiceId: string) => {
-		setExpandedInvoices((prevState) => ({
-			...prevState,
-			[invoiceId]: !prevState[invoiceId], // Alterna entre expandido y contraído
-		}));
-	};
+	const [paymentDate, setPaymentDate] = useState<Date | null>(null);
+	const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+	const flatListRef = useRef<FlatList<any>>(null);
 
 	useEffect(() => {
 		fetchInvoices();
@@ -53,25 +49,20 @@ const SeeInvoices: React.FC = () => {
 				paymentMethod,
 				paymentDate,
 			);
-
-			if (response.status === 200) {
-				alert("Factura pagada con éxito");
+			if (response.status === 201) {
+				Alert.alert("Factura pagada con éxito");
 
 				// Filtrar la factura que se pagó
 				const updatedInvoices = invoices.filter(
-					(invoice) => invoice.id !== invoiceId,
+					(invoice) => invoice._id !== invoiceId,
 				);
-				setInvoices(updatedInvoices); // Actualizar el estado con la lista filtrada
-
-				fetchInvoices(); // Recargar la lista de facturas si es necesario
+				setInvoices(updatedInvoices);
 			} else {
-				alert("Error al procesar el pago.");
+				Alert.alert("Error al procesar el pago.");
 			}
-			alert("Factura pagada con éxito");
-			fetchInvoices(); // Recargar la lista de facturas
 		} catch (error) {
 			console.error("Error al pagar la factura", error);
-			alert("Error al procesar el pago");
+			Alert.alert("Error al procesar el pago");
 		}
 	};
 
@@ -85,23 +76,39 @@ const SeeInvoices: React.FC = () => {
 	};
 
 	const onDateChange = (event: any, selectedDate: Date | undefined) => {
-		const currentDate = selectedDate || paymentDate;
 		setShowDatePicker(Platform.OS === "ios" ? true : false);
-		setPaymentDate(currentDate); // Actualizar la fecha de pago seleccionada
+		setPaymentDate(selectedDate || paymentDate);
 	};
 
-	const renderInvoice = ({ item }: { item: any }) => (
+	const toggleInvoice = (invoiceId: string, index: number) => {
+		setExpandedInvoices((prevState) => {
+			const newState = {
+				...prevState,
+				[invoiceId]: !prevState[invoiceId],
+			};
+
+			// Si es el último item, hacemos scroll al final
+			if (index === invoices.length - 1) {
+				setTimeout(() => {
+					flatListRef.current?.scrollToEnd({ animated: true });
+				}, 200); // Delay pequeño para que el re-render no interrumpa el scroll
+			}
+
+			return newState;
+		});
+	};
+
+	const renderInvoice = ({ item, index }: { item: any; index: number }) => (
 		<View style={styles.card}>
 			<Text style={styles.expenseTitle}>
 				{item.description} - {item.currency}
 			</Text>
 			<Text style={styles.expenseTitle}>
-				{item.amountDollars}$ - {item.amountBs}Bs.
+				{item.amountDollars}$ - {item.amountBs.toFixed(2)}Bs.
 			</Text>
-			{/* Botón para expandir */}
 
 			<TouchableOpacity
-				onPress={() => toggleInvoice(item._id)}
+				onPress={() => toggleInvoice(item._id, index)}
 				style={styles.expandButton}
 			>
 				<Text>{expandedInvoices[item._id] ? "🔼" : "🔽"}</Text>
@@ -120,58 +127,58 @@ const SeeInvoices: React.FC = () => {
 			{/* Opciones de pago solo si está expandido */}
 			{expandedInvoices[item._id] && (
 				<View style={styles.paymentOptions}>
-					<Text>Selecciona la fecha de pago:</Text>
-
-					{/* Selector de fecha */}
-					{Platform.OS === "web" ? (
-						<input
-							type="date"
-							value={
-								paymentDate
-									? paymentDate.toISOString().split("T")[0]
-									: ""
-							}
-							onChange={(e) =>
-								setPaymentDate(new Date(e.target.value))
-							}
-						/>
-					) : (
+					<View style={styles.datePickerRow}>
+						{Platform.OS === "web" ? (
+							<input
+								type="date"
+								value={
+									paymentDate
+										? paymentDate
+											.toISOString()
+											.split("T")[0]
+										: ""
+								}
+								onChange={(e) =>
+									setPaymentDate(new Date(e.target.value))
+								}
+							/>
+						) : (
+							<>
+								<TouchableOpacity
+									onPress={() => setShowDatePicker(true)}
+								>
+									<ThemedText>Fecha de pago:</ThemedText>
+								</TouchableOpacity>
+								{showDatePicker && (
+									<DateTimePicker
+										value={paymentDate || new Date()}
+										mode="date"
+										display="default"
+										onChange={onDateChange}
+									/>
+								)}
+							</>
+						)}
+					</View>
+					<View style={styles.buttons}>
 						<TouchableOpacity
-							onPress={() => setShowDatePicker(true)}
+							style={styles.paymentButton}
+							onPress={() =>
+								handlePayInvoice(item._id, "Efectivo")
+							}
 						>
-							<Text>
-								{paymentDate
-									? paymentDate.toLocaleDateString()
-									: "Selecciona una fecha"}
-							</Text>
+							<Text>💵 Efectivo</Text>
 						</TouchableOpacity>
-					)}
 
-					{/* Mostrar DateTimePicker en móvil */}
-					{showDatePicker && (
-						<DateTimePicker
-							value={paymentDate || new Date()}
-							mode="date"
-							display="default"
-							onChange={onDateChange}
-						/>
-					)}
-
-					<TouchableOpacity
-						style={styles.paymentButton}
-						onPress={() => handlePayInvoice(item._id, "Efectivo")} // Aquí pasamos la fecha seleccionada
-					>
-						<Text>💵 Efectivo</Text>
-					</TouchableOpacity>
-
-					<TouchableOpacity
-						style={styles.paymentButton}
-						onPress={() =>
-							handlePayInvoice(item._id, "Transferencia")
-						} // Aquí pasamos la fecha seleccionada
-					>
-						<Text>🏦 Transferencia</Text>
-					</TouchableOpacity>
+						<TouchableOpacity
+							style={styles.paymentButton}
+							onPress={() =>
+								handlePayInvoice(item._id, "Transferencia")
+							}
+						>
+							<Text>🏦 Transferencia</Text>
+						</TouchableOpacity>
+					</View>
 				</View>
 			)}
 		</View>
@@ -185,10 +192,12 @@ const SeeInvoices: React.FC = () => {
 				</Text>
 			) : (
 				<FlatList
+					ref={flatListRef}
 					data={invoices}
 					keyExtractor={(item) => item._id.toString()}
 					renderItem={renderInvoice}
 					style={{ width: "100%" }}
+					ListFooterComponent={<View style={{ height: 100 }} />} // Espaciado para evitar ocultamiento
 				/>
 			)}
 		</ThemedView>
@@ -258,6 +267,22 @@ const styles = StyleSheet.create({
 		color: "green",
 		textAlign: "center",
 		marginTop: 20,
+	},
+	datePickerRow: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		width: "100%",
+		marginBottom: 10,
+	},
+	datePickerLabel: {
+		fontSize: 16,
+		color: "#333",
+	},
+	buttons: {
+		flexDirection: "row",
+		justifyContent: "space-evenly",
+		width: "100%",
 	},
 });
 

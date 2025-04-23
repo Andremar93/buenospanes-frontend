@@ -10,10 +10,6 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import { UserProvider, useUser } from "@/contexts/UserContext"; // Aquí importas el contexto
-import {
-	ExchangeRateProvider,
-	useExchangeRate,
-} from "@/contexts/ExchangeRateContext"; // Aquí importas el contexto
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
 
@@ -40,81 +36,87 @@ export default function RootLayout() {
 
 	return (
 		<UserProvider>
-			<ExchangeRateProvider>
-				<ThemeProvider
-					value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-				>
-					<Stack>
-						<Stack.Screen
-							name="(tabs)"
-							options={{ headerShown: false }}
-						/>
-						<Stack.Screen
-							name="index"
-							options={{ headerShown: false }}
-						/>
-						<Stack.Screen
-							name="login"
-							options={{
-								headerShown: false,
-							}}
-						/>
-						<Stack.Screen
-							name="ExpensesMenu"
-							options={{
-								headerShown: true,
-								headerTitle: "Gastos",
-								headerRight: () => <LogoutButton />, // Botón de logout en el header
-							}}
-						/>
-						<Stack.Screen
-							name="CreateExpense"
-							options={{
-								headerShown: true,
-								headerTitle: "Crear Gasto",
-								headerRight: () => <LogoutButton />, // Botón de logout en el header
-							}}
-						/>
-						<Stack.Screen
-							name="SeeExpenses"
-							options={{
-								headerShown: true,
-								headerTitle: "Gastos",
-								headerRight: () => <LogoutButton />, // Botón de logout en el header
-							}}
-						/>
-						<Stack.Screen
-							name="SeeInvoices"
-							options={{
-								headerShown: true,
-								headerTitle: "Facturas",
-								headerRight: () => <LogoutButton />, // Botón de logout en el header
-							}}
-						/>
-						<Stack.Screen
-							name="IncomeMenu"
-							options={{
-								headerShown: true,
-								headerTitle: "Ingresos",
-								headerRight: () => <LogoutButton />, // Botón de logout en el header
-							}}
-						/>
-						<Stack.Screen
-							name="PrincipalMenu"
-							options={{
-								headerShown: true,
-								headerTitle: "Menu Principal",
-								headerRight: () => <LogoutButton />, // Botón de logout en el header
-							}}
-						/>
-						<Stack.Screen
-							name="+not-found"
-							options={{ headerShown: false }}
-						/>
-					</Stack>
-					<StatusBar style="auto" />
-				</ThemeProvider>
-			</ExchangeRateProvider>
+			<ThemeProvider
+				value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+			>
+				<Stack>
+					<Stack.Screen
+						name="(tabs)"
+						options={{ headerShown: false }}
+					/>
+					<Stack.Screen
+						name="index"
+						options={{ headerShown: false }}
+					/>
+					<Stack.Screen
+						name="login"
+						options={{
+							headerShown: false,
+						}}
+					/>
+					<Stack.Screen
+						name="CreateExpense"
+						options={{
+							headerShown: true,
+							headerTitle: "Crear Gasto",
+							headerRight: () => <LogoutButton />, // Botón de logout en el header
+						}}
+					/>
+					<Stack.Screen
+						name="CreateInvoice"
+						options={{
+							headerShown: true,
+							headerTitle: "Crear Factura",
+							headerRight: () => <LogoutButton />, // Botón de logout en el header
+						}}
+					/>
+					<Stack.Screen
+						name="SeeExpenses"
+						options={{
+							headerShown: true,
+							headerTitle: "Gastos",
+							headerRight: () => <LogoutButton />, // Botón de logout en el header
+						}}
+					/>
+					<Stack.Screen
+						name="ExpensesResume"
+						options={{
+							headerShown: true,
+							headerTitle: "Resumen",
+							headerRight: () => <LogoutButton />, // Botón de logout en el header
+						}}
+					/>
+					<Stack.Screen
+						name="SeeInvoices"
+						options={{
+							headerShown: true,
+							headerTitle: "Facturas",
+							headerRight: () => <LogoutButton />, // Botón de logout en el header
+						}}
+					/>
+					<Stack.Screen
+						name="MainMenu"
+						options={{
+							headerShown: true,
+							headerTitle: "",
+							headerRight: () => <LogoutButton />, // Botón de logout en el header
+						}}
+					/>
+					<Stack.Screen
+						name="PrincipalMenu"
+						options={{
+							headerShown: true,
+							headerTitle: "",
+							headerRight: () => <LogoutButton />, // Botón de logout en el header
+						}}
+					/>
+					<Stack.Screen
+						name="+not-found"
+						options={{ headerShown: false }}
+					/>
+				</Stack>
+				<StatusBar style="auto" />
+			</ThemeProvider>
 		</UserProvider>
 	);
 }
@@ -139,12 +141,10 @@ const styles = StyleSheet.create({
 const LogoutButton = () => {
 	const { logout } = useUser();
 
-	const { resetExchangeRate } = useExchangeRate();
 	const router = useRouter();
 
 	const handleLogout = () => {
 		logout();
-		resetExchangeRate();
 		router.push("/login");
 	};
 

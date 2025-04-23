@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { StyleSheet, TouchableOpacity, Alert, Platform } from "react-native";
+import {
+	StyleSheet,
+	TouchableOpacity,
+	Alert,
+	Platform,
+	View,
+} from "react-native";
 import { createInvoice } from "../services/api";
 import { useForm, Controller } from "react-hook-form";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -24,7 +30,7 @@ const CreateInvoice: React.FC = () => {
 	const onSubmit = (data: any) => {
 		// Convert date to yyyy-mm-dd format
 		const formattedDate = dueDate.toISOString().split("T")[0];
-		console.log("dueDate", dueDate);
+
 		// Send data to the API
 		const invoiceData = {
 			...data, // Incluye los campos del formulario
@@ -37,20 +43,15 @@ const CreateInvoice: React.FC = () => {
 		createInvoice(invoiceData)
 			.then((response) => {
 				Alert.alert(
-					"Gasto creado",
-					"El gasto ha sido registrado correctamente",
+					"Factura creada",
+					"La factura ha sido registrada correctamente",
 				);
-				router.replace("/InvoiceMenu"); // Navegar a la pantalla de gastos
+				router.replace(`/MainMenu?type=invoices`); // Navegar a la pantalla de gastos
 			})
 			.catch((error) => {
 				console.error("Error al guardar el gasto:", error);
 				Alert.alert("Error", "Hubo un problema al guardar el gasto");
 			});
-
-		Alert.alert(
-			"Gasto creado",
-			"El gasto ha sido registrado correctamente",
-		);
 	};
 	const onDateChange = (event: any, selectedDate: Date | undefined) => {
 		const currentDate = selectedDate || dueDate;
@@ -84,7 +85,7 @@ const CreateInvoice: React.FC = () => {
 
 			{/* Selección de moneda (Bs o $) */}
 			<ThemedText align="flex-start">Tipo de moneda:</ThemedText>
-			<ThemedView style={styles.buttonGroup}>
+			<View style={styles.buttonGroup}>
 				<TouchableOpacity
 					style={[
 						styles.paymentButton,
@@ -108,7 +109,7 @@ const CreateInvoice: React.FC = () => {
 						Dólares ($)
 					</ThemedText>
 				</TouchableOpacity>
-			</ThemedView>
+			</View>
 
 			{/* Monto del gasto */}
 			<Controller

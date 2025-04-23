@@ -1,0 +1,81 @@
+{
+	"mainMenu": {
+		"title": "Menú Principal",
+		"options": [
+			{
+				"id": "1",
+				"title": "Gastos",
+				"screen": "/MainMenu",
+				"type": "expenses"
+			},
+			{
+				"id": "2",
+				"title": "Facturas",
+				"screen": "/MainMenu",
+				"type": "invoices"
+			},
+			{
+				"id": "3",
+				"title": "Ingresos",
+				"screen": "/MainMenu",
+				"type": "incomes"
+			},
+			{
+				"id": "4",
+				"title": "Empleados",
+				"screen": "/MainMenu",
+				"type": "/employees"
+			}
+		]
+	},
+	"invoices": {
+		"title": "Facturas",
+		"options": [
+			{
+				"id": "1",
+				"title": "Crear facturas",
+				"screen": "/CreateInvoice"
+			},
+			{
+				"id": "2",
+				"title": "Ver Facturas",
+				"screen": "/SeeInvoices"
+			}
+		]
+	},
+	"expenses": {
+		"title": "Gastos",
+		"options": [
+			{
+				"id": "1",
+				"title": "Crear gasto",
+				"screen": "/CreateExpense"
+			},
+			{
+				"id": "2",
+				"title": "Ver Gastos",
+				"screen": "/SeeExpenses"
+			},
+			{
+				"id": "3",
+				"title": "Resumen Gastos",
+				"screen": "/ExpensesResume"
+			}
+		]
+	},
+	"incomes": {
+		"title": "Ingresos",
+		"options": [
+			{
+				"id": "1",
+				"title": "Crear Ingreso",
+				"screen": "/CreateIncome"
+			},
+			{
+				"id": "2",
+				"title": "Ver Ingresos",
+				"screen": "/SeeIncomes"
+			}
+		]
+	}
+}

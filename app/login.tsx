@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, Alert, TouchableOpacity, Text, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { useUser } from "@/contexts/UserContext";
-import { useExchangeRate } from "@/contexts/ExchangeRateContext";
-import { login, getExchangeRateByDate } from "../services/api";
+import { login } from "../services/api";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedTextInput } from "@/components/ThemedTextInput";
@@ -13,22 +12,21 @@ const bpLogo = require("../assets/images/buenos-panes-logo.jpeg");
 const LoginForm: React.FC = () => {
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
+
 	const { setUser } = useUser();
 	const { user } = useUser();
 	const router = useRouter();
 
 	useEffect(() => {
 		const checkLoginStatus = async () => {
-			//console.log("checkLoginStatus", user);
-			//console.log("user on login", user);
 			if (user.token) {
 				router.replace("/PrincipalMenu");
 			}
 		};
 		checkLoginStatus();
-	}, []);
+	}, [user, router]);
 
-	const handleLogin = async (username: string, password: string) => {
+	const handleLogin = async () => {
 		if (!username || !password) {
 			Alert.alert("Error", "Por favor, completa todos los campos");
 			return;
@@ -37,37 +35,16 @@ const LoginForm: React.FC = () => {
 		try {
 			const response = await login(username, password);
 			const userData = { username, token: response.token };
-
 			setUser(userData);
-			console.log("loginresponse", response);
-
-			const selectedDate = new Date(); // Obtener fecha actual
-			selectedDate.setUTCHours(selectedDate.getUTCHours() - 4); // Ajustar a UTC-4 (Venezuela)
-			const formattedDate = selectedDate.toISOString().split("T")[0];
-
-			const exchangeRate = await getExchangeRateByDate(formattedDate);
-
-			console.log("useExchangeRate", exchangeRate);
-
-			if (exchangeRate) {
-				router.replace("/SetExchangeRate");
-				// Redirigir a la pantalla de tasa
-			} else {
-				Alert.alert("Éxito", "Inicio de sesión exitoso");
-				setUsername(username);
-				router.replace("/PrincipalMenu"); // Redirigir a la pantalla de inicio
-			}
-
-			// router.replace('/'); // Redirigir a la pantalla principal
+			Alert.alert("Éxito", "Inicio de sesión exitoso");
+			setUsername(username);
+			router.replace("/PrincipalMenu");
 		} catch (error) {
-			console.log(error);
-			Alert.alert("Error", "No se pudo iniciar sesión");
+			Alert.alert(
+				"Error",
+				error instanceof Error ? error.message : "Error desconocido",
+			);
 		}
-	};
-
-	// Wrap handleLogin in a function that doesn't take parameters
-	const handleLoginPress = () => {
-		handleLogin(username, password);
 	};
 
 	return (
@@ -86,7 +63,7 @@ const LoginForm: React.FC = () => {
 				value={password}
 				onChangeText={setPassword}
 			/>
-			<TouchableOpacity style={styles.button} onPress={handleLoginPress}>
+			<TouchableOpacity style={styles.button} onPress={handleLogin}>
 				<Text style={styles.buttonText}>Ingresar</Text>
 			</TouchableOpacity>
 		</ThemedView>
@@ -117,6 +94,21 @@ const styles = StyleSheet.create({
 		color: "#fff",
 		fontSize: 18,
 		fontWeight: "bold",
+	},
+	input: {
+		borderWidth: 1,
+		borderColor: "#ccc",
+		padding: 10,
+		width: "100%",
+		marginBottom: 10,
+		borderRadius: 5,
+	},
+	modalButton: {
+		backgroundColor: "#28a745",
+		padding: 10,
+		borderRadius: 10,
+		width: "100%",
+		alignItems: "center",
 	},
 });
 

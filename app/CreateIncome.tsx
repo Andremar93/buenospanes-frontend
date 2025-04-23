@@ -1,258 +1,274 @@
-import React, { useState } from "react";
-import { StyleSheet, TouchableOpacity, Alert, Platform } from "react-native";
-import { createInvoice } from "../services/api";
+import {
+	View,
+	Platform,
+	TouchableOpacity,
+	Text,
+	ScrollView,
+	Alert,
+	KeyboardAvoidingView,
+} from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { ThemedView } from "@/components/ThemedView";
+import React, { useState, useCallback } from "react";
 import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
 import { ThemedTextInput } from "@/components/ThemedTextInput";
-
+import { styles } from "@/app/styles/CreateIncome.style";
+import { createIncome } from "@/services/api";
 import { useRouter } from "expo-router";
 
-const CreateIncome: React.FC = () => {
+// Botón separado y memoizado
+const SubmitButton = React.memo(({ onPress }: { onPress: () => void }) => (
+	<TouchableOpacity onPress={onPress} style={styles.submitButton}>
+		<ThemedText style={styles.submitButtonText} type="defaultSemiBold">
+			Registrar
+		</ThemedText>
+	</TouchableOpacity>
+));
+SubmitButton.displayName = "SubmitButton";
+
+const formatDate = (date: Date) => date.toISOString().split("T")[0];
+const requiredRule = { required: "Este campo es obligatorio" };
+
+const MonetaryInput = ({
+	control,
+	name,
+	label,
+	error,
+}: {
+	control: any;
+	name: string;
+	label: string;
+	error?: any;
+}) => (
+	<View style={styles.textInput}>
+		<ThemedText
+			style={styles.label}
+			align="flex-start"
+			type="defaultSemiBold"
+		>
+			{label}
+		</ThemedText>
+		<View style={styles.inputContainer}>
+			<Controller
+				control={control}
+				name={name}
+				rules={requiredRule}
+				render={({ field: { onChange, onBlur, value } }) => (
+					<ThemedTextInput
+						placeholder="0.0"
+						keyboardType="numeric"
+						onBlur={onBlur}
+						value={value?.toString() || ""}
+						onChangeText={(text) => {
+							const filtered = text.replace(/[^0-9.]/g, "");
+							if (filtered.split(".").length > 2) return;
+							onChange(filtered);
+						}}
+					/>
+				)}
+			/>
+			{error && <Text style={styles.error}>{error.message}</Text>}
+		</View>
+	</View>
+);
+
+export default function CreateIncome() {
+	const [showDatePicker, setShowDatePicker] = useState(false);
+	const [date, setDate] = useState(new Date());
+	const router = useRouter();
+
 	const {
 		control,
 		handleSubmit,
+		setValue,
 		formState: { errors },
-	} = useForm();
-	const [currency, setCurrency] = useState("Bs"); // Default is Bs
-	const [dueDate, setDueDate] = useState(new Date()); // Default date is today
-	const [showDatePicker, setShowDatePicker] = useState<boolean>(false); // Para mostrar el selector de fecha
+	} = useForm({
+		defaultValues: {
+			date: formatDate(date),
+			efectivoBs: "0",
+			efectivoDolares: "0",
+			puntoExterno: "0",
+			sitef: "0",
+			pagomovil: "0",
+			gastosBs: "0",
+			gastosDolares: "0",
+			biopago: "0",
+			totalSistema: "0",
+			notas: "",
+		},
+	});
 
-	const router = useRouter();
+	const onSubmit = useCallback(
+		(data: any) => {
+			createIncome(data)
+				.then((response) => {
+					if (response.expense.status === 404) {
+						Alert.alert(
+							"Ingreso NO creado",
+							response.expense.message,
+						);
+					} else {
+						Alert.alert(
+							"Ingreso creado",
+							"El ingreso ha sido registrado correctamente",
+						);
+						router.replace(`/MainMenu?type=incomes`);
+					}
+				})
+				.catch((error) => {
+					console.error("Error al guardar el ingreso:", error);
+					Alert.alert(
+						"Error",
+						"Hubo un problema al guardar el ingreso",
+					);
+				});
+		},
+		[router],
+	);
 
-	const onSubmit = (data: any) => {
-		// Convert date to yyyy-mm-dd format
-		const formattedDate = dueDate.toISOString().split("T")[0];
-		console.log("dueDate", dueDate);
-		// Send data to the API
-		const invoiceData = {
-			...data, // Incluye los campos del formulario
-			currency, // Tipo de moneda
-			type: "Proveedor",
-			dueDate: formattedDate, // Fecha seleccionada en formato correcto
-		};
+	const memoizedHandleSubmit = useCallback(
+		() => handleSubmit(onSubmit)(),
+		[handleSubmit, onSubmit],
+	);
 
-		// Llamada a la API para guardar el gasto
-		createInvoice(invoiceData)
-			.then((response) => {
-				Alert.alert(
-					"Gasto creado",
-					"El gasto ha sido registrado correctamente",
-				);
-				router.replace("/InvoiceMenu"); // Navegar a la pantalla de gastos
-			})
-			.catch((error) => {
-				console.error("Error al guardar el gasto:", error);
-				Alert.alert("Error", "Hubo un problema al guardar el gasto");
-			});
-
-		Alert.alert(
-			"Gasto creado",
-			"El gasto ha sido registrado correctamente",
-		);
-	};
 	const onDateChange = (event: any, selectedDate: Date | undefined) => {
-		const currentDate = selectedDate || dueDate;
-		setShowDatePicker(Platform.OS === "ios" ? true : false);
-		setDueDate(currentDate); // Actualizar la fecha de pago seleccionada
+		const currentDate = selectedDate || date;
+		setShowDatePicker(false);
+		setDate(currentDate);
+		setValue("date", formatDate(currentDate));
 	};
 
 	return (
-		<ThemedView style={styles.container}>
-			{/* <ThemedText style={styles.title}>Crear Gasto</ThemedText> */}
+		<KeyboardAvoidingView
+			style={{ flex: 1 }}
+			behavior={Platform.OS === "ios" ? "padding" : undefined}
+			keyboardVerticalOffset={80}
+		>
+			<ThemedView style={styles.container}>
+				<ScrollView
+					style={{ width: "95%" }}
+					contentContainerStyle={[
+						styles.scrollContainer,
+						{ paddingBottom: 100 },
+					]}
+					keyboardShouldPersistTaps="handled"
+					showsVerticalScrollIndicator={true}
+				>
+					{/* Fecha */}
+					<View>
+						<ThemedText style={styles.label} type="defaultSemiBold">
+							Fecha del Ingreso
+						</ThemedText>
+						{Platform.OS === "web" ? (
+							<input
+								type="date"
+								value={date.toISOString().split("T")[0]}
+								onChange={(e) =>
+									setDate(new Date(e.target.value))
+								}
+							/>
+						) : (
+							<TouchableOpacity
+								onPress={() => setShowDatePicker(true)}
+							>
+								<ThemedText>
+									{date
+										? date.toLocaleDateString()
+										: "Selecciona una fecha"}
+								</ThemedText>
+							</TouchableOpacity>
+						)}
+						{showDatePicker && (
+							<DateTimePicker
+								value={date}
+								mode="date"
+								display={
+									Platform.OS === "ios" ? "inline" : "default"
+								}
+								onChange={onDateChange}
+							/>
+						)}
+					</View>
 
-			{/* Nombre del Proveedor */}
-			<Controller
-				control={control}
-				render={({ field: { onChange, onBlur, value } }) => (
-					<ThemedTextInput
-						placeholder="Nombre del proveedor"
-						onBlur={onBlur}
-						onChangeText={onChange}
-						value={value || ""}
+					{/* Métodos de pago */}
+					<MonetaryInput
+						control={control}
+						name="efectivoBs"
+						label="Efectivo (BS):"
+						error={errors.efectivoBs}
 					/>
-				)}
-				name="supplier"
-				rules={{ required: "El proveedor es obligatorio" }}
-			/>
-			{errors.supplier && (
-				<ThemedText style={styles.error}>
-					{errors.supplier.message?.toString()}
-				</ThemedText>
-			)}
+					<MonetaryInput
+						control={control}
+						name="efectivoDolares"
+						label="Efectivo ($):"
+						error={errors.efectivoDolares}
+					/>
+					<MonetaryInput
+						control={control}
+						name="sitef"
+						label="Sitef:"
+						error={errors.sitef}
+					/>
+					<MonetaryInput
+						control={control}
+						name="puntoExterno"
+						label="Punto Externo:"
+						error={errors.puntoExterno}
+					/>
+					<MonetaryInput
+						control={control}
+						name="pagomovil"
+						label="PagoMovil:"
+						error={errors.pagomovil}
+					/>
+					<MonetaryInput
+						control={control}
+						name="biopago"
+						label="Biopago:"
+						error={errors.biopago}
+					/>
+					<MonetaryInput
+						control={control}
+						name="gastosBs"
+						label="Gasto Bs:"
+						error={errors.gastosBs}
+					/>
+					<MonetaryInput
+						control={control}
+						name="gastosDolares"
+						label="Gasto $:"
+						error={errors.gastosDolares}
+					/>
+					<MonetaryInput
+						control={control}
+						name="totalSistema"
+						label="Total Sistema:"
+						error={errors.totalSistema}
+					/>
 
-			{/* Selección de moneda (Bs o $) */}
-			<ThemedText align="flex-start">Tipo de moneda:</ThemedText>
-			<ThemedView style={styles.buttonGroup}>
-				<TouchableOpacity
-					style={[
-						styles.paymentButton,
-						currency === "Bs" && styles.selectedButton,
-					]}
-					onPress={() => setCurrency("Bs")}
-				>
-					<ThemedText style={styles.buttonText}>
-						Bolívares (Bs)
-					</ThemedText>
-				</TouchableOpacity>
+					{/* Notas */}
+					<Controller
+						control={control}
+						name="notas"
+						render={({ field: { onChange, onBlur, value } }) => (
+							<ThemedTextInput
+								placeholder="Notas extras"
+								onBlur={onBlur}
+								onChangeText={onChange}
+								value={value || ""}
+							/>
+						)}
+					/>
+					{errors.notas && (
+						<ThemedText style={styles.error}>
+							{errors.notas.message?.toString()}
+						</ThemedText>
+					)}
+				</ScrollView>
 
-				<TouchableOpacity
-					style={[
-						styles.paymentButton,
-						currency === "$" && styles.selectedButton,
-					]}
-					onPress={() => setCurrency("$")}
-				>
-					<ThemedText style={styles.buttonText}>
-						Dólares ($)
-					</ThemedText>
-				</TouchableOpacity>
+				<SubmitButton onPress={memoizedHandleSubmit} />
 			</ThemedView>
-
-			{/* Monto del gasto */}
-			<Controller
-				control={control}
-				render={({ field: { onChange, onBlur, value } }) => (
-					<ThemedTextInput
-						placeholder="Monto"
-						keyboardType="numeric"
-						onBlur={onBlur}
-						onChangeText={onChange}
-						value={value || ""}
-					/>
-				)}
-				name="amount"
-				rules={{ required: "El monto es obligatorio" }}
-			/>
-			{errors.amount && (
-				<ThemedText style={styles.error}>
-					{errors.amount.message?.toString()}
-				</ThemedText>
-			)}
-
-			{/* Selección de subtipo de gasto 
-            <ThemedText align="flex-start">SubTipo de Gasto</ThemedText>
-            <ThemedPicker
-                selectedValue={subType}
-                onValueChange={setSubType}
-                items={[
-                    { label: 'Electricidad', value: 'electricidad' },
-                    { label: 'Internet', value: 'internet' },
-                    { label: 'Alquiler', value: 'alquiler' },
-                ]}
-            />*/}
-
-			{/* Fecha del gasto */}
-			<ThemedText style={styles.label}>Fecha a pagar</ThemedText>
-			{Platform.OS === "web" ? (
-				<input
-					type="date"
-					value={dueDate ? dueDate.toISOString().split("T")[0] : ""}
-					onChange={(e) => setDueDate(new Date(e.target.value))}
-				/>
-			) : (
-				<TouchableOpacity onPress={() => setShowDatePicker(true)}>
-					<ThemedText>
-						{dueDate
-							? dueDate.toLocaleDateString()
-							: "Selecciona una fecha"}
-					</ThemedText>
-				</TouchableOpacity>
-			)}
-
-			{/* Mostrar DateTimePicker en móvil */}
-			{showDatePicker && (
-				<DateTimePicker
-					value={dueDate || new Date()}
-					mode="date"
-					display="default"
-					onChange={onDateChange}
-				/>
-			)}
-
-			<TouchableOpacity
-				style={styles.button}
-				onPress={handleSubmit(onSubmit)}
-			>
-				<ThemedText style={styles.buttonText}>
-					Registrar Factura
-				</ThemedText>
-			</TouchableOpacity>
-		</ThemedView>
+		</KeyboardAvoidingView>
 	);
-};
-
-const styles = StyleSheet.create({
-	container: {
-		padding: 20,
-		flex: 1,
-		justifyContent: "flex-start",
-		alignItems: "center",
-		maxWidth: 650,
-	},
-	title: {
-		fontSize: 24,
-		fontWeight: "bold",
-		color: "#fff",
-	},
-	input: {
-		width: "100%",
-		padding: 10,
-		borderWidth: 1,
-		borderColor: "#ccc",
-		borderRadius: 8,
-		marginBottom: 10,
-	},
-	button: {
-		backgroundColor: "#007bff",
-		padding: 15,
-		borderRadius: 10,
-		marginVertical: 10,
-		width: 200,
-		alignItems: "center",
-	},
-	buttonText: {
-		color: "#fff",
-		fontSize: 18,
-		fontWeight: "bold",
-	},
-	label: {
-		fontSize: 18,
-		marginBottom: 10,
-	},
-	picker: {
-		height: 50,
-		width: "100%",
-		borderWidth: 1,
-		borderColor: "#ccc",
-		borderRadius: 5,
-	},
-	dateText: {
-		fontSize: 16,
-		color: "#333",
-	},
-	error: {
-		color: "red",
-		fontSize: 12,
-	},
-	buttonGroup: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		width: "100%",
-		marginVertical: 10,
-	},
-	paymentButton: {
-		flex: 1,
-		backgroundColor: "#ddd",
-		padding: 15,
-		borderRadius: 8,
-		marginHorizontal: 5,
-		alignItems: "center",
-	},
-	selectedButton: {
-		backgroundColor: "#007bff",
-	},
-});
-
-export default CreateIncome;
+}

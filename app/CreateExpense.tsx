@@ -1,12 +1,17 @@
 import React, { useState } from "react";
-import { StyleSheet, TouchableOpacity, Alert, Platform } from "react-native";
+import {
+	StyleSheet,
+	TouchableOpacity,
+	Alert,
+	Platform,
+	View,
+} from "react-native";
 import { createExpense } from "../services/api";
 import { useForm, Controller } from "react-hook-form";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedTextInput } from "@/components/ThemedTextInput";
-import { ThemedPicker } from "@/components/ThemedPicker";
 import { Dropdown } from "react-native-element-dropdown";
 import AntDesign from "@expo/vector-icons/AntDesign";
 
@@ -38,15 +43,18 @@ const CreateExpense: React.FC = () => {
 			paid: true,
 			date: formattedDate, // Fecha seleccionada en formato correcto
 		};
-		console.log(expenseData);
 		// Llamada a la API para guardar el gasto
 		createExpense(expenseData)
 			.then((response) => {
-				Alert.alert(
-					"Gasto creado",
-					"El gasto ha sido registrado correctamente",
-				);
-				router.replace("/ExpensesMenu"); // Navegar a la pantalla de gastos
+				if (response.expense.status === 404) {
+					Alert.alert("Gasto NO creado", response.expense.message);
+				} else {
+					Alert.alert(
+						"Gasto creado",
+						"El gasto ha sido registrado correctamente",
+					);
+					router.replace(`/MainMenu?type=expenses`);
+				}
 			})
 			.catch((error) => {
 				console.error("Error al guardar el gasto:", error);
@@ -87,7 +95,7 @@ const CreateExpense: React.FC = () => {
 
 			{/* Selección de moneda (Bs o $) */}
 			<ThemedText align="flex-start">Tipo de moneda:</ThemedText>
-			<ThemedView style={styles.buttonGroup}>
+			<View style={styles.buttonGroup}>
 				<TouchableOpacity
 					style={[
 						styles.paymentButton,
@@ -111,7 +119,7 @@ const CreateExpense: React.FC = () => {
 						Dólares ($)
 					</ThemedText>
 				</TouchableOpacity>
-			</ThemedView>
+			</View>
 
 			{/* Monto del gasto */}
 			<Controller
@@ -184,6 +192,10 @@ const CreateExpense: React.FC = () => {
 						{
 							label: "Gastos Personales",
 							value: "gastosPersonales",
+						},
+						{
+							label: "Gastos Extraordinarios",
+							value: "gastosExtraordinarios",
 						},
 					]}
 					search
