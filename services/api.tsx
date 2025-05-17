@@ -1,6 +1,7 @@
 import axios, { AxiosError } from "axios";
 
-const API_URL = "http://localhost:3000"; // Cambia esto según tu backend
+// const API_URL = "https://localhost:3000"; // Cambia esto según tu backend
+const API_URL = "https://buenospanes-backend.up.railway.app/";
 
 const api = axios.create({
 	baseURL: API_URL,
