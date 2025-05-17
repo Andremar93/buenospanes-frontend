@@ -60,18 +60,17 @@ const SeeExpenses: React.FC = () => {
 	);
 
 	return (
-		<ThemedView style={[styles.container]}>
-			<ThemedView>
+		<ThemedView style={styles.container}>
+			<View>
 				<ThemedText>PRoBABLY A FILTER HERE</ThemedText>
-			</ThemedView>
-			<ThemedView>
-				<FlatList
-					data={expenses}
-					keyExtractor={(item) => item._id}
-					renderItem={renderExpense}
-					style={{ width: "100%" }}
-				/>
-			</ThemedView>
+			</View>
+
+			<FlatList
+				data={expenses}
+				keyExtractor={(item) => item._id}
+				renderItem={renderExpense}
+				style={{ width: "100%" }}
+			/>
 		</ThemedView>
 	);
 };
@@ -83,7 +82,6 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		paddingTop: 20,
 		paddingHorizontal: 20,
-		width: "100%",
 	},
 	card: {
 		backgroundColor: "#f8f8f8",
@@ -96,6 +94,7 @@ const styles = StyleSheet.create({
 		shadowOpacity: 0.3,
 		shadowRadius: 4,
 		elevation: 3,
+		position: "relative",
 	},
 	expenseTitle: {
 		fontSize: 20,

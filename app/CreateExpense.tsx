@@ -3,89 +3,88 @@ import {
 	StyleSheet,
 	TouchableOpacity,
 	Alert,
-	Platform,
 	View,
+	ActivityIndicator,
 } from "react-native";
 import { createExpense } from "../services/api";
 import { useForm, Controller } from "react-hook-form";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedTextInput } from "@/components/ThemedTextInput";
 import { Dropdown } from "react-native-element-dropdown";
 import AntDesign from "@expo/vector-icons/AntDesign";
-
-import { useRouter } from "expo-router";
+import { ThemedDatePicker } from "@/components/ThemedDatePicker";
 
 const CreateExpense: React.FC = () => {
 	const {
 		control,
 		handleSubmit,
 		formState: { errors },
+		reset,
 	} = useForm();
+
 	const [currency, setCurrency] = useState("Bs");
 	const [type, setType] = useState("gastosFijos");
-	const [paymentMethod, setpaymentMethod] = useState("cuentaBs");
+	const [paymentMethod, setPaymentMethod] = useState("cuentaBs");
 	const [date, setDate] = useState(new Date());
-	const [showDatePicker, setShowDatePicker] = useState(false);
-	const router = useRouter();
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const onSubmit = (data: any) => {
-		// Convert date to yyyy-mm-dd format
+	const onSubmit = async (data: any) => {
+		if (isSubmitting) return;
+
+		setIsSubmitting(true);
+
 		const formattedDate = date.toISOString().split("T")[0];
 
-		// Send data to the API
 		const expenseData = {
-			...data, // Incluye los campos del formulario
-			currency, // Tipo de moneda
+			...data,
+			currency,
 			type,
 			paymentMethod,
 			paid: true,
-			date: formattedDate, // Fecha seleccionada en formato correcto
+			date: formattedDate,
 		};
-		// Llamada a la API para guardar el gasto
-		createExpense(expenseData)
-			.then((response) => {
-				if (response.expense.status === 404) {
-					Alert.alert("Gasto NO creado", response.expense.message);
-				} else {
-					Alert.alert(
-						"Gasto creado",
-						"El gasto ha sido registrado correctamente",
-					);
-					router.replace(`/MainMenu?type=expenses`);
-				}
-			})
-			.catch((error) => {
-				console.error("Error al guardar el gasto:", error);
-				Alert.alert("Error", "Hubo un problema al guardar el gasto");
-			});
+
+		try {
+			const response = await createExpense(expenseData);
+			if (response.expense?.status === 404) {
+				Alert.alert("Gasto NO creado", response.expense.message);
+			} else {
+				Alert.alert(
+					"Gasto creado",
+					"El gasto ha sido registrado correctamente",
+				);
+				reset(); // limpia el formulario
+				// router.replace("/MainMenu?type=expenses");
+			}
+		} catch (error) {
+			console.error("Error al guardar el gasto:", error);
+			Alert.alert("Error", "Hubo un problema al guardar el gasto");
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
-	const onDateChange = (event: any, selectedDate: Date | undefined) => {
-		const currentDate = selectedDate || date;
-		setShowDatePicker(false);
-		//setShowDatePicker(Platform.OS === "ios" ? true : false);
-		setDate(currentDate); // Actualizar la fecha de pago seleccionada
+	const onDateChange = (selectedDate: Date) => {
+		setDate(selectedDate);
 	};
 
 	return (
 		<ThemedView style={styles.container}>
-			{/* <ThemedText style={styles.title}>Crear Gasto</ThemedText> */}
-
-			{/* Nombre del gasto */}
+			{/* Descripción */}
 			<Controller
 				control={control}
+				name="description"
+				rules={{ required: "La descripción es obligatoria" }}
 				render={({ field: { onChange, onBlur, value } }) => (
 					<ThemedTextInput
 						placeholder="Descripción del Gasto"
 						onBlur={onBlur}
 						onChangeText={onChange}
 						value={value}
+						editable={!isSubmitting}
 					/>
 				)}
-				name="description"
-				rules={{ required: "La descripción es obligatoria" }}
 			/>
 			{errors.description && (
 				<ThemedText style={styles.error}>
@@ -93,37 +92,31 @@ const CreateExpense: React.FC = () => {
 				</ThemedText>
 			)}
 
-			{/* Selección de moneda (Bs o $) */}
+			{/* Moneda */}
 			<ThemedText align="flex-start">Tipo de moneda:</ThemedText>
 			<View style={styles.buttonGroup}>
-				<TouchableOpacity
-					style={[
-						styles.paymentButton,
-						currency === "Bs" && styles.selectedButton,
-					]}
-					onPress={() => setCurrency("Bs")}
-				>
-					<ThemedText style={styles.buttonText}>
-						Bolívares (Bs)
-					</ThemedText>
-				</TouchableOpacity>
-
-				<TouchableOpacity
-					style={[
-						styles.paymentButton,
-						currency === "$" && styles.selectedButton,
-					]}
-					onPress={() => setCurrency("$")}
-				>
-					<ThemedText style={styles.buttonText}>
-						Dólares ($)
-					</ThemedText>
-				</TouchableOpacity>
+				{["Bs", "$"].map((c) => (
+					<TouchableOpacity
+						key={c}
+						style={[
+							styles.paymentButton,
+							currency === c && styles.selectedButton,
+						]}
+						onPress={() => setCurrency(c)}
+						disabled={isSubmitting}
+					>
+						<ThemedText style={styles.buttonText}>
+							{c === "Bs" ? "Bolívares (Bs)" : "Dólares ($)"}
+						</ThemedText>
+					</TouchableOpacity>
+				))}
 			</View>
 
-			{/* Monto del gasto */}
+			{/* Monto */}
 			<Controller
 				control={control}
+				name="amount"
+				rules={{ required: "El monto es obligatorio" }}
 				render={({ field: { onChange, onBlur, value } }) => (
 					<ThemedTextInput
 						placeholder="Monto"
@@ -131,10 +124,9 @@ const CreateExpense: React.FC = () => {
 						onBlur={onBlur}
 						onChangeText={onChange}
 						value={value}
+						editable={!isSubmitting}
 					/>
 				)}
-				name="amount"
-				rules={{ required: "El monto es obligatorio" }}
 			/>
 			{errors.amount && (
 				<ThemedText style={styles.error}>
@@ -142,11 +134,12 @@ const CreateExpense: React.FC = () => {
 				</ThemedText>
 			)}
 
-			{/* Selección de medio de pago */}
+			{/* Medio de pago */}
 			<ThemedText align="flex-start">Medio de pago:</ThemedText>
 			<ThemedView style={{ height: 70, width: "100%" }}>
 				<Dropdown
 					style={styles.dropdown}
+					disabled={isSubmitting}
 					placeholderStyle={styles.placeholderStyle}
 					selectedTextStyle={styles.selectedTextStyle}
 					inputSearchStyle={styles.inputSearchStyle}
@@ -160,12 +153,10 @@ const CreateExpense: React.FC = () => {
 					maxHeight={300}
 					labelField="label"
 					valueField="value"
-					placeholder="Select item"
-					searchPlaceholder="Search..."
+					placeholder="Selecciona un medio"
+					searchPlaceholder="Buscar..."
 					value={paymentMethod}
-					onChange={(item) => {
-						setpaymentMethod(item.value);
-					}}
+					onChange={(item) => setPaymentMethod(item.value)}
 					renderLeftIcon={() => (
 						<AntDesign
 							style={styles.icon}
@@ -177,11 +168,12 @@ const CreateExpense: React.FC = () => {
 				/>
 			</ThemedView>
 
-			{/* Selección de tipo de gasto */}
+			{/* Tipo de Gasto */}
 			<ThemedText align="flex-start">Tipo de Gasto</ThemedText>
 			<ThemedView style={{ height: 70, width: "100%" }}>
 				<Dropdown
 					style={styles.dropdown}
+					disabled={isSubmitting}
 					placeholderStyle={styles.placeholderStyle}
 					selectedTextStyle={styles.selectedTextStyle}
 					inputSearchStyle={styles.inputSearchStyle}
@@ -202,12 +194,10 @@ const CreateExpense: React.FC = () => {
 					maxHeight={300}
 					labelField="label"
 					valueField="value"
-					placeholder="Select item"
-					searchPlaceholder="Search..."
+					placeholder="Selecciona un tipo"
+					searchPlaceholder="Buscar..."
 					value={type}
-					onChange={(item) => {
-						setType(item.value);
-					}}
+					onChange={(item) => setType(item.value)}
 					renderLeftIcon={() => (
 						<AntDesign
 							style={styles.icon}
@@ -219,54 +209,29 @@ const CreateExpense: React.FC = () => {
 				/>
 			</ThemedView>
 
-			{/* Selección de subtipo de gasto 
-            <ThemedText align="flex-start">SubTipo de Gasto</ThemedText>
-            <ThemedPicker
-                selectedValue={subType}
-                onValueChange={setSubType}
-                items={[
-                    { label: 'Electricidad', value: 'electricidad' },
-                    { label: 'Internet', value: 'internet' },
-                    { label: 'Alquiler', value: 'alquiler' },
-                ]}
-            />*/}
-
-			{/* Fecha del gasto */}
-			<ThemedText style={styles.label}>Fecha del Gasto</ThemedText>
-			{/* Mostrar el DatePicker si el estado showDatePicker es true */}
-			{Platform.OS === "web" ? (
-				<input
-					type="date"
-					value={date ? date.toISOString().split("T")[0] : ""}
-					onChange={(e) => setDate(new Date(e.target.value))}
-				/>
-			) : (
-				<TouchableOpacity onPress={() => setShowDatePicker(true)}>
-					<ThemedText>
-						{date
-							? date.toLocaleDateString()
-							: "Selecciona una fecha"}
-					</ThemedText>
-				</TouchableOpacity>
-			)}
-
-			{/* Mostrar DateTimePicker en móvil */}
-			{showDatePicker && (
-				<DateTimePicker
-					value={date || new Date()}
-					mode="date"
-					display={Platform.OS === "ios" ? "inline" : "default"}
-					onChange={onDateChange}
-				/>
-			)}
-
+			{/* Fecha */}
+			<ThemedDatePicker
+				value={date}
+				onChange={onDateChange}
+				disabled={isSubmitting}
+				label="Fecha del Gasto"
+			/>
+			{/* Botón de envío */}
 			<TouchableOpacity
-				style={styles.button}
+				style={[
+					styles.button,
+					isSubmitting && { backgroundColor: "#ccc" },
+				]}
 				onPress={handleSubmit(onSubmit)}
+				disabled={isSubmitting}
 			>
-				<ThemedText style={styles.buttonText}>
-					Registrar Gasto
-				</ThemedText>
+				{isSubmitting ? (
+					<ActivityIndicator color="#fff" />
+				) : (
+					<ThemedText style={styles.buttonText}>
+						Registrar Gasto
+					</ThemedText>
+				)}
 			</TouchableOpacity>
 		</ThemedView>
 	);
@@ -279,19 +244,6 @@ const styles = StyleSheet.create({
 		justifyContent: "flex-start",
 		alignItems: "center",
 		maxWidth: 650,
-	},
-	title: {
-		fontSize: 24,
-		fontWeight: "bold",
-		color: "#fff",
-	},
-	input: {
-		width: "100%",
-		padding: 10,
-		borderWidth: 1,
-		borderColor: "#ccc",
-		borderRadius: 8,
-		marginBottom: 10,
 	},
 	button: {
 		backgroundColor: "#007bff",
@@ -309,17 +261,6 @@ const styles = StyleSheet.create({
 	label: {
 		fontSize: 18,
 		marginBottom: 10,
-	},
-	picker: {
-		height: 50,
-		width: "100%",
-		borderWidth: 1,
-		borderColor: "#ccc",
-		borderRadius: 5,
-	},
-	dateText: {
-		fontSize: 16,
-		color: "#333",
 	},
 	error: {
 		color: "red",

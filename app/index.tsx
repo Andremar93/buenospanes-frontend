@@ -41,7 +41,7 @@ export default function IndexScreen() {
 			<ThemedText type="title">BUENOS PANES CCS</ThemedText>
 			<Button
 				title="Iniciar sesión"
-				onPress={() => router.push("/login")}
+				onPress={() => router.replace("/login")}
 			/>
 			{/* <Button title="Registrarse" onPress={() => router.push("/register")} /> */}
 		</ThemedView>

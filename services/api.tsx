@@ -85,6 +85,7 @@ export const getExchangeRateByDate = async (date: string) => {
 
 export const createExpense = async (expenseData: any) => {
 	try {
+		console.log(expenseData);
 		const response = await axios.post(
 			`${API_URL}/expenses/create`,
 			expenseData,
