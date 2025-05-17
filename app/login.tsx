@@ -6,6 +6,7 @@ import { login } from "../services/api";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedTextInput } from "@/components/ThemedTextInput";
+import * as SecureStore from "expo-secure-store";
 
 const bpLogo = require("../assets/images/buenos-panes-logo.jpeg");
 
@@ -35,6 +36,7 @@ const LoginForm: React.FC = () => {
 		try {
 			const response = await login(username, password);
 			const userData = { username, token: response.token };
+			await SecureStore.setItemAsync("userToken", response.token);
 			setUser(userData);
 			Alert.alert("Éxito", "Inicio de sesión exitoso");
 			setUsername(username);

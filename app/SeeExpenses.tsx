@@ -1,8 +1,9 @@
 import React from "react";
-import { Text, StyleSheet, FlatList, View } from "react-native";
+import { Text, StyleSheet, FlatList, View, Alert } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { getExpenses } from "@/services/api";
 import { ThemedText } from "@/components/ThemedText";
+import * as SecureStore from "expo-secure-store";
 
 const SeeExpenses: React.FC = () => {
 	const [expenses, setExpenses] = React.useState([]);
@@ -10,7 +11,15 @@ const SeeExpenses: React.FC = () => {
 	React.useEffect(() => {
 		const fetchExpenses = async () => {
 			try {
-				const expensesData = await getExpenses();
+				const token = await SecureStore.getItemAsync("userToken");
+				if (!token) {
+					Alert.alert(
+						"Error",
+						"No se encontró el token de autenticación",
+					);
+					return;
+				}
+				const expensesData = await getExpenses(token);
 				setExpenses(expensesData);
 				//console.log("expensesData", expensesData);
 			} catch (error) {

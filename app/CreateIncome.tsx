@@ -17,6 +17,7 @@ import { ThemedDatePicker } from "@/components/ThemedDatePicker";
 import { styles } from "@/app/styles/CreateIncome.style";
 import { createIncome } from "@/services/api";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 
 const formatDate = (date: Date) => date.toISOString().split("T")[0];
 const requiredRule = { required: "Este campo es obligatorio" };
@@ -130,7 +131,15 @@ export default function CreateIncome() {
 			};
 
 			try {
-				const response = await createIncome(payload);
+				const token = await SecureStore.getItemAsync("userToken");
+				if (!token) {
+					Alert.alert(
+						"Error",
+						"No se encontró el token de autenticación",
+					);
+					return;
+				}
+				const response = await createIncome(payload, token);
 				if (response.expense.status === 404) {
 					Alert.alert("Ingreso NO creado", response.expense.message);
 				} else {

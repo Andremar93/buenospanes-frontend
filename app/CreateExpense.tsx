@@ -14,6 +14,7 @@ import { ThemedTextInput } from "@/components/ThemedTextInput";
 import { Dropdown } from "react-native-element-dropdown";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { ThemedDatePicker } from "@/components/ThemedDatePicker";
+import * as SecureStore from "expo-secure-store";
 
 const CreateExpense: React.FC = () => {
 	const {
@@ -46,7 +47,15 @@ const CreateExpense: React.FC = () => {
 		};
 
 		try {
-			const response = await createExpense(expenseData);
+			const token = await SecureStore.getItemAsync("userToken");
+			if (!token) {
+				Alert.alert(
+					"Error",
+					"No se encontró el token de autenticación",
+				);
+				return;
+			}
+			const response = await createExpense(expenseData, token);
 			if (response.expense?.status === 404) {
 				Alert.alert("Gasto NO creado", response.expense.message);
 			} else {
