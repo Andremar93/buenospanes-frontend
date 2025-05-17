@@ -14,7 +14,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedTextInput } from "@/components/ThemedTextInput";
 import { ThemedDatePicker } from "@/components/ThemedDatePicker";
-import { styles } from "@/app/styles/CreateIncome.style";
+import { styles } from "@/styles/CreateIncome.style";
 import { createIncome } from "@/services/api";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
