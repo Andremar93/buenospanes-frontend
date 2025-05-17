@@ -3,9 +3,12 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getExchangeRateByDate, createExchangeRate } from "../services/api";
 
-// Función para obtener la fecha actual en formato "YYYY-MM-DD"
-const getCurrentDate = () => {
-	return new Date().toISOString().split("T")[0];
+const storageKey = "app-storage";
+
+const getFormattedToday = () => {
+	const now = new Date();
+	now.setUTCHours(now.getUTCHours() - 4);
+	return now.toISOString().split("T")[0];
 };
 
 const useStore = create(
@@ -13,44 +16,62 @@ const useStore = create(
 		(set, get) => ({
 			username: "",
 			exchangeRate: null,
-			lastUpdated: null, // Fecha cuando se guardó la tasa
+			lastUpdated: null,
+			loading: false,
 
 			setUsername: (name) => set({ username: name }),
+			setLoading: (loading) => set({ loading }),
 
-			setExchangeRate: (rate) => {
-				// Llamada a la API para guardar el gasto
-				createExchangeRate(rate)
-					.then((response) => {
-						const today = getCurrentDate();
-						set({ exchangeRate: rate, lastUpdated: today });
-						return true;
-					})
-					.catch((error) => {
-						console.error("Error al guardar la tasa:", error);
-						return `Error al guardar la tasa, error`;
+			setExchangeRate: async (rate) => {
+				try {
+					await createExchangeRate(rate);
+					set({
+						exchangeRate: rate,
+						lastUpdated: getFormattedToday(),
 					});
+					return true;
+				} catch (error) {
+					console.error("Error al guardar la tasa:", error);
+					return false;
+				}
 			},
 
 			checkExchangeRate: async () => {
 				const { lastUpdated } = get();
-				const today = getCurrentDate();
-				const selectedDate = new Date();
-				selectedDate.setUTCHours(selectedDate.getUTCHours() - 4);
-				// Si la tasa es de otro día, resetearla a null
-				if (lastUpdated !== today) {
-					const formattedDate = selectedDate
-						.toISOString()
-						.split("T")[0];
+				const today = getFormattedToday();
 
-					const exchangerate =
-						await getExchangeRateByDate(formattedDate);
-					console.log("exchangerate getting", exchangerate);
-					set({ exchangeRate: null, lastUpdated: today });
+				if (lastUpdated !== today) {
+					set({ loading: true });
+					try {
+						const rateData = await getExchangeRateByDate(today);
+						if (rateData && typeof rateData.rate === "number") {
+							set({
+								exchangeRate: rateData.rate,
+								lastUpdated: today,
+							});
+						} else {
+							set({ exchangeRate: null, lastUpdated: today });
+						}
+					} catch (err) {
+						console.error("Error al obtener tasa:", err);
+					} finally {
+						set({ loading: false });
+					}
 				}
+				// get().resetStore();
+			},
+
+			resetStore: () => {
+				set({
+					username: "",
+					exchangeRate: null,
+					lastUpdated: null,
+				});
+				AsyncStorage.removeItem(storageKey);
 			},
 		}),
 		{
-			name: "app-storage",
+			name: storageKey,
 			storage: createJSONStorage(() => AsyncStorage),
 		},
 	),

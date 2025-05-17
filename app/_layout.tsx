@@ -145,7 +145,7 @@ const LogoutButton = () => {
 
 	const handleLogout = () => {
 		logout();
-		router.push("/login");
+		router.replace("/login");
 	};
 
 	return (

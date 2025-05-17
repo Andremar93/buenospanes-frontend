@@ -35,19 +35,19 @@ const PrincipalMenu: React.FC = () => {
 		checkExchangeRate();
 	}, [navigationState?.key]);
 
-	// Guardar la tasa de cambio ingresada en el formulario
-	const handleSaveExchangeRate = () => {
+	const handleSaveExchangeRate = async () => {
 		const rate = parseFloat(newExchangeRate);
 		if (isNaN(rate) || rate <= 0) {
 			Alert.alert("Error", "Ingrese una tasa de cambio válida");
 			return;
 		}
-		const exchangeRateSet = setExchangeRate(rate); // ✅ Guardamos en Zustand
-		console.log("exchangeRateSet", exchangeRateSet);
-		if (exchangeRateSet) {
+
+		const success = await setExchangeRate(rate);
+
+		if (success) {
 			Alert.alert("Éxito", "Tasa de cambio guardada correctamente");
 		} else {
-			Alert.alert("ERROR? ", exchangeRateSet);
+			Alert.alert("Error", "No se pudo guardar la tasa de cambio");
 		}
 	};
 
@@ -94,17 +94,39 @@ const PrincipalMenu: React.FC = () => {
 				)}
 			</View>
 			{/* MENÚ PRINCIPAL */}
+			{!exchangeRate && (
+				<ThemedText
+					type="default"
+					style={{ marginBottom: 10, color: "#999" }}
+				>
+					Debes ingresar una tasa de cambio para habilitar el menú.
+				</ThemedText>
+			)}
 			<FlatList
 				data={menuData.mainMenu.options} // Cargar opciones desde el JSON
 				keyExtractor={(item) => item.id}
-				renderItem={({ item }) => (
-					<TouchableOpacity
-						style={styles.button}
-						onPress={() => handlePress(item.screen, item.type)}
-					>
-						<Text style={styles.buttonText}>{item.title}</Text>
-					</TouchableOpacity>
-				)}
+				renderItem={({ item }) => {
+					const isDisabled = !exchangeRate;
+					return (
+						<TouchableOpacity
+							style={[
+								styles.button,
+								isDisabled && styles.disabledButton,
+							]}
+							onPress={() => handlePress(item.screen, item.type)}
+							disabled={isDisabled}
+						>
+							<Text
+								style={[
+									styles.buttonText,
+									isDisabled && styles.disabledButtonText,
+								]}
+							>
+								{item.title}
+							</Text>
+						</TouchableOpacity>
+					);
+				}}
 			/>
 		</ThemedView>
 	);
@@ -160,6 +182,12 @@ const styles = StyleSheet.create({
 	},
 	exchangeMessage: {
 		paddingBottom: 5,
+	},
+	disabledButton: {
+		backgroundColor: "#ccc",
+	},
+	disabledButtonText: {
+		color: "#888",
 	},
 });
 
