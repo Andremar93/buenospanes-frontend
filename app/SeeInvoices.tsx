@@ -12,6 +12,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { getInvoices, createExpenseByInvoice } from "@/services/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as SecureStore from "expo-secure-store";
 
 const SeeInvoices: React.FC = () => {
 	const [invoices, setInvoices] = useState<any[]>([]);
@@ -28,7 +29,15 @@ const SeeInvoices: React.FC = () => {
 
 	const fetchInvoices = async () => {
 		try {
-			const invoicesData = await getInvoices();
+			const token = await SecureStore.getItemAsync("userToken");
+			if (!token) {
+				Alert.alert(
+					"Error",
+					"No se encontró el token de autenticación",
+				);
+				return;
+			}
+			const invoicesData = await getInvoices(token);
 			setInvoices(invoicesData);
 		} catch (error) {
 			console.error("Error fetching invoices:", error);
@@ -44,10 +53,19 @@ const SeeInvoices: React.FC = () => {
 				alert("Por favor selecciona una fecha de pago.");
 				return;
 			}
+			const token = await SecureStore.getItemAsync("userToken");
+			if (!token) {
+				Alert.alert(
+					"Error",
+					"No se encontró el token de autenticación",
+				);
+				return;
+			}
 			const response = await createExpenseByInvoice(
 				invoiceId,
 				paymentMethod,
 				paymentDate,
+				token,
 			);
 			if (response.status === 201) {
 				Alert.alert("Factura pagada con éxito");

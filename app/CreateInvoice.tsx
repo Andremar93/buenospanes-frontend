@@ -12,6 +12,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedTextInput } from "@/components/ThemedTextInput";
 import { ThemedDatePicker } from "@/components/ThemedDatePicker";
+import * as SecureStore from "expo-secure-store";
 
 const CreateInvoice: React.FC = () => {
 	const {
@@ -41,7 +42,15 @@ const CreateInvoice: React.FC = () => {
 				dueDate: formattedDate,
 			};
 
-			await createInvoice(invoiceData);
+			const token = await SecureStore.getItemAsync("userToken");
+			if (!token) {
+				Alert.alert(
+					"Error",
+					"No se encontró el token de autenticación",
+				);
+				return;
+			}
+			await createInvoice(invoiceData, token);
 
 			Alert.alert(
 				"Factura creada",

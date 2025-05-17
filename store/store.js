@@ -22,9 +22,9 @@ const useStore = create(
 			setUsername: (name) => set({ username: name }),
 			setLoading: (loading) => set({ loading }),
 
-			setExchangeRate: async (rate) => {
+			setExchangeRate: async (rate, token) => {
 				try {
-					await createExchangeRate(rate);
+					await createExchangeRate(rate, token);
 					set({
 						exchangeRate: rate,
 						lastUpdated: getFormattedToday(),
@@ -36,14 +36,17 @@ const useStore = create(
 				}
 			},
 
-			checkExchangeRate: async () => {
+			checkExchangeRate: async (token) => {
 				const { lastUpdated } = get();
 				const today = getFormattedToday();
 
 				if (lastUpdated !== today) {
 					set({ loading: true });
 					try {
-						const rateData = await getExchangeRateByDate(today);
+						const rateData = await getExchangeRateByDate(
+							today,
+							token,
+						);
 						if (rateData && typeof rateData.rate === "number") {
 							set({
 								exchangeRate: rateData.rate,

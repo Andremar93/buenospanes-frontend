@@ -16,6 +16,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useRootNavigationState } from "expo-router";
 import menuData from "@/data/menuOptions.json"; // Importar el JSON
 import useStore from "../store/store";
+import * as SecureStore from "expo-secure-store";
 
 const PrincipalMenu: React.FC = () => {
 	const router = useRouter();
@@ -30,10 +31,21 @@ const PrincipalMenu: React.FC = () => {
 		if (!navigationState?.key) return; // Espera hasta que el Root Layout esté montado
 		if (!user?.token) {
 			router.replace("/login");
+			return;
 		}
-		// Verificar si ya hay una tasa de cambio
-		checkExchangeRate();
-	}, [navigationState?.key]);
+
+		const fetchExchangeRate = async () => {
+			const token = await SecureStore.getItemAsync("userToken");
+			if (token) {
+				checkExchangeRate(token);
+			} else {
+				// Si no hay token, tal vez redirigir o manejar error
+				router.replace("/login");
+			}
+		};
+
+		fetchExchangeRate();
+	}, [navigationState?.key, user?.token]);
 
 	const handleSaveExchangeRate = async () => {
 		const rate = parseFloat(newExchangeRate);
@@ -42,7 +54,8 @@ const PrincipalMenu: React.FC = () => {
 			return;
 		}
 
-		const success = await setExchangeRate(rate);
+		const token = await SecureStore.getItemAsync("userToken");
+		const success = await setExchangeRate(rate, token);
 
 		if (success) {
 			Alert.alert("Éxito", "Tasa de cambio guardada correctamente");

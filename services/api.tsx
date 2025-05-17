@@ -1,7 +1,7 @@
 import axios, { AxiosError } from "axios";
 
-// const API_URL = "https://localhost:3000"; // Cambia esto según tu backend
-const API_URL = "https://buenospanes-backend.up.railway.app/";
+// const API_URL = "http://localhost:3000"; // Cambia esto según tu backend
+const API_URL = "https://buenospanes-backend-production.up.railway.app";
 
 const api = axios.create({
 	baseURL: API_URL,
@@ -11,14 +11,10 @@ const api = axios.create({
 export const login = async (username: string, password: string) => {
 	try {
 		const loginResponse = await api.post("/login", { username, password });
-
-		return {
-			...loginResponse.data,
-		};
+		return { ...loginResponse.data };
 	} catch (error) {
 		if (error instanceof AxiosError) {
 			console.log("🔴 Error en login API:", error.message);
-
 			if (error.response) {
 				console.log("📌 Respuesta del servidor:", error.response.data);
 				console.log("📌 Código de estado:", error.response.status);
@@ -28,51 +24,45 @@ export const login = async (username: string, password: string) => {
 						: error.response.data?.error || "Error desconocido";
 				throw new Error(errorMessage);
 			} else if (error.request) {
-				console.log(
-					"🚨 No hubo respuesta del servidor:",
-					error.request,
-				);
-				throw new Error(
-					"No hubo respuesta del servidor. Intenta de nuevo.",
-				);
+				throw new Error("No hubo respuesta del servidor.");
 			}
-		} else {
-			throw new Error(`🚨 Error inesperado: ${String(error)}`);
 		}
+		throw new Error(`🚨 Error inesperado: ${String(error)}`);
 	}
 };
 
 // EXHANGE RATE APIS START
 
-export const createExchangeRate = async (rate: any) => {
+export const createExchangeRate = async (rate: number, token: string) => {
 	try {
-		const response = await axios.post(
-			`${API_URL}/exchange-rate/create`,
+		console.log("token", token);
+		const response = await api.post(
+			"/exchange-rate/create",
 			{ rate },
 			{
 				headers: {
-					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
 				},
 			},
 		);
 		return response.data;
 	} catch (error) {
-		console.error("Error al crear la tasa:", error);
+		console.error("Error al crear la tasa:", JSON.stringify(error));
 		throw error;
 	}
 };
 
-export const getExchangeRateByDate = async (date: string) => {
+export const getExchangeRateByDate = async (date: string, token: string) => {
 	try {
-		const response = await api.get(`/exchange-rate/get/${date}`);
-
+		const response = await api.get(`/exchange-rate/get/${date}`, {
+			headers: { Authorization: `Bearer ${token}` },
+		});
 		if (response.status === 204 || !response.data) {
 			return {
 				message: "No hay tasa de cambio para esta fecha.",
 				exchangeRate: null,
 			};
 		}
-
 		return response.data;
 	} catch (error) {
 		console.error("Error al obtener la tasa de cambio:", error);
@@ -84,13 +74,11 @@ export const getExchangeRateByDate = async (date: string) => {
 
 // EXPENSES APIS START
 
-export const createExpense = async (expenseData: any) => {
+export const createExpense = async (expenseData: any, token: string) => {
 	try {
-		console.log(expenseData);
-		const response = await axios.post(
-			`${API_URL}/expenses/create`,
-			expenseData,
-		);
+		const response = await api.post("/expenses/create", expenseData, {
+			headers: { Authorization: `Bearer ${token}` },
+		});
 		return response.data;
 	} catch (error) {
 		console.error("Error al crear el gasto:", error);
@@ -102,30 +90,34 @@ export const createExpenseByInvoice = async (
 	invoiceId: string,
 	paymentMethod: string,
 	date: Date,
+	token: string,
 ) => {
 	try {
 		const expenseData = {
-			invoiceId, // Enviar el ID de la factura
-			paymentMethod, // Enviar el método de pago
+			invoiceId,
+			paymentMethod,
 			paid: true,
-			date, // Marcar la factura como pagada
-			// Puedes agregar más datos aquí si es necesario, como la fecha o tipo de gasto
+			date,
 		};
-
-		const response = await axios.post(
-			`${API_URL}/expenses/create-by-invoice`,
+		const response = await api.post(
+			"/expenses/create-by-invoice",
 			expenseData,
+			{
+				headers: { Authorization: `Bearer ${token}` },
+			},
 		);
-		return response;
+		return response.data;
 	} catch (error) {
 		console.error("Error al crear el gasto:", error);
 		throw error;
 	}
 };
 
-export const getExpenses = async () => {
+export const getExpenses = async (token: string) => {
 	try {
-		const response = await axios.get(`${API_URL}/expenses/get`);
+		const response = await api.get("/expenses/get", {
+			headers: { Authorization: `Bearer ${token}` },
+		});
 		return response.data;
 	} catch (error) {
 		console.error("Error al obtener los gastos", error);
@@ -133,13 +125,14 @@ export const getExpenses = async () => {
 	}
 };
 
-export const getExpensesResume = async (dates: {
-	startDate: string;
-	endDate: string;
-}) => {
+export const getExpensesResume = async (
+	dates: { startDate: string; endDate: string },
+	token: string,
+) => {
 	try {
 		const response = await api.get("/expenses/expenses-resume", {
-			params: dates, // Esto se convierte en query params: /expenses/expenses-resume?startDate=X&endDate=Y
+			params: dates,
+			headers: { Authorization: `Bearer ${token}` },
 		});
 		return response.data;
 	} catch (error) {
@@ -151,25 +144,26 @@ export const getExpensesResume = async (dates: {
 // EXPENSES APIS END
 
 // INOVICES APIS START
-export const createInvoice = async (invoiceData: any) => {
+export const createInvoice = async (invoiceData: any, token: string) => {
 	try {
-		const response = await axios.post(
-			`${API_URL}/invoices/create`,
-			invoiceData,
-		);
+		const response = await api.post("/invoices/create", invoiceData, {
+			headers: { Authorization: `Bearer ${token}` },
+		});
 		return response.data;
 	} catch (error) {
-		console.error("Error al crear el gasto:", error);
+		console.error("Error al crear la factura:", error);
 		throw error;
 	}
 };
 
-export const getInvoices = async () => {
+export const getInvoices = async (token: string) => {
 	try {
-		const response = await axios.get(`${API_URL}/invoices/get`);
+		const response = await api.get("/invoices/get", {
+			headers: { Authorization: `Bearer ${token}` },
+		});
 		return response.data;
 	} catch (error) {
-		console.error("Error al obtener los gastos", error);
+		console.error("Error al obtener las facturas", error);
 		throw error;
 	}
 };
@@ -177,12 +171,11 @@ export const getInvoices = async () => {
 // INOVICES APIS END
 
 // INCOME APIS START
-export const createIncome = async (incomeData: any) => {
+export const createIncome = async (incomeData: any, token: string) => {
 	try {
-		const response = await axios.post(
-			`${API_URL}/incomes/create`,
-			incomeData,
-		);
+		const response = await api.post("/incomes/create", incomeData, {
+			headers: { Authorization: `Bearer ${token}` },
+		});
 		return response.data;
 	} catch (error) {
 		console.error("Error al crear el ingreso:", error);
