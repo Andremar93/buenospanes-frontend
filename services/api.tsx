@@ -5,7 +5,7 @@ const API_URL = "https://buenospanes-backend-production.up.railway.app";
 
 const api = axios.create({
 	baseURL: API_URL,
-	timeout: 1000,
+	timeout: 10000,
 });
 
 export const login = async (username: string, password: string) => {

@@ -1,0 +1,6 @@
+module Pods_panaderiafrontend {
+  umbrella header "Pods-panaderiafrontend-umbrella.h"
+
+  export *
+  module * { export * }
+}
