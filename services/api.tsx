@@ -1,11 +1,11 @@
 import axios, { AxiosError } from "axios";
 
-// const API_URL = "http://localhost:3000"; // Cambia esto según tu backend
-const API_URL = "https://buenospanes-backend-production.up.railway.app";
+const API_URL = "http://localhost:3000"; // Cambia esto según tu backend
+// const API_URL = "https://buenospanes-backend-production.up.railway.app";
 
 const api = axios.create({
 	baseURL: API_URL,
-	timeout: 1000,
+	timeout: 5000,
 });
 
 export const login = async (username: string, password: string) => {

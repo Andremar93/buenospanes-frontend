@@ -51,5 +51,8 @@
 				"projectId": "4991ccbd-b20f-42bc-8c82-40e2b356aa29"
 			}
 		}
+	},
+	"cli": {
+		"appVersionSource": "app.json"
 	}
 }

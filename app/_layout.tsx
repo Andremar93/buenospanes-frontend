@@ -12,6 +12,8 @@ import "react-native-reanimated";
 import { UserProvider, useUser } from "@/contexts/UserContext"; // Aquí importas el contexto
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import * as Notifications from 'expo-notifications';
+import { registerForPushNotificationsAsync } from '@/utils/notifications';
 
 import { useRouter } from "expo-router";
 

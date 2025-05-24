@@ -32,7 +32,6 @@ const LoginForm: React.FC = () => {
 			Alert.alert("Error", "Por favor, completa todos los campos");
 			return;
 		}
-
 		try {
 			const response = await login(username, password);
 			const userData = { username, token: response.token };
