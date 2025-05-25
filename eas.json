@@ -7,6 +7,12 @@
 				"simulator": true
 			}
 		},
+		"development-apk": {
+			"android": {
+				"buildType": "apk"
+			},
+			"distribution": "internal"
+		},
 		"preview": {
 			"distribution": "internal"
 		},

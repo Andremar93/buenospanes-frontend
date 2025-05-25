@@ -22,6 +22,7 @@
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.1",
+    "@sentry/react-native": "^6.14.0",
     "axios": "^1.7.9",
     "dotenv": "^16.5.0",
     "expo": "~52.0.46",
@@ -52,6 +53,7 @@
     "react-native-screens": "~4.4.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
+    "sentry-expo": "^7.2.0",
     "zustand": "^5.0.3"
   },
   "devDependencies": {

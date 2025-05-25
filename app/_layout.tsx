@@ -12,10 +12,15 @@ import "react-native-reanimated";
 import { UserProvider, useUser } from "@/contexts/UserContext"; // Aquí importas el contexto
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
-import * as Notifications from 'expo-notifications';
-import { registerForPushNotificationsAsync } from '@/utils/notifications';
+import * as Sentry from "sentry-expo";
 
 import { useRouter } from "expo-router";
+
+Sentry.init({
+	dsn: "https://5e1a5661eed5ebd94a182edf0a9858a8@o4509383973666816.ingest.us.sentry.io/4509383989788672",
+	enableInExpoDevelopment: true,
+	debug: true,
+});
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -25,6 +30,8 @@ export default function RootLayout() {
 	const [loaded] = useFonts({
 		SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
 	});
+
+	Sentry.Native.captureException(new Error("Error de prueba"));
 
 	useEffect(() => {
 		if (loaded) {
