@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
 
 const API_URL = "http://localhost:3000";
+// const API_URL = "https://buenospanes-backend-staging.up.railway.app"; // Cambia esto según tu backend
+
 
 export function usePushNotifications() {
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);

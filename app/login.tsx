@@ -38,6 +38,8 @@ const LoginForm: React.FC = () => {
 
 			const userData = { username, token: response.token, id: response.user.id };
 			await SecureStore.setItemAsync("userToken", response.token);
+			await SecureStore.setItemAsync("userId", response.user.id);
+			await SecureStore.setItemAsync("username", username);
 			setUser(userData);
 			Alert.alert("Éxito", "Inicio de sesión exitoso");
 			router.replace("/PrincipalMenu");

@@ -1,6 +1,7 @@
 import axios, { AxiosError } from "axios";
 
-const API_URL = "https://buenospanes-backend-staging.up.railway.app"; // Cambia esto según tu backend
+// const API_URL = "https://buenospanes-backend-staging.up.railway.app"; // Cambia esto según tu backend
+const API_URL = "http://localhost:3000";
 // const API_URL = "https://buenospanes-backend-production.up.railway.app";
 
 const api = axios.create({
