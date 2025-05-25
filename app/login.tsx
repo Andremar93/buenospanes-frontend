@@ -54,7 +54,7 @@ const LoginForm: React.FC = () => {
 	return (
 		<ThemedView style={styles.container}>
 			<Image source={bpLogo} style={{ width: 100, height: 100 }} />
-			<ThemedText style={styles.title}>Iniciar Sesión</ThemedText>
+			<ThemedText style={styles.title}>Iniciaaaaaar Sesión</ThemedText>
 			<ThemedTextInput
 				placeholder="Usuario"
 				value={username}
