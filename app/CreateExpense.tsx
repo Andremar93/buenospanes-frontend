@@ -15,6 +15,7 @@ import { Dropdown } from "react-native-element-dropdown";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { ThemedDatePicker } from "@/components/ThemedDatePicker";
 import * as SecureStore from "expo-secure-store";
+import { useUser } from "@/contexts/UserContext";
 
 const CreateExpense: React.FC = () => {
 	const {
@@ -23,7 +24,9 @@ const CreateExpense: React.FC = () => {
 		formState: { errors },
 		reset,
 	} = useForm();
+	const { user } = useUser();
 
+	console.log(user)
 	const [currency, setCurrency] = useState("Bs");
 	const [type, setType] = useState("gastosFijos");
 	const [paymentMethod, setPaymentMethod] = useState("cuentaBs");
@@ -44,6 +47,7 @@ const CreateExpense: React.FC = () => {
 			paymentMethod,
 			paid: true,
 			date: formattedDate,
+			userId: user.id
 		};
 
 		try {

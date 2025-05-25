@@ -17,6 +17,7 @@ import { useRootNavigationState } from "expo-router";
 import menuData from "@/data/menuOptions.json"; // Importar el JSON
 import useStore from "../store/store";
 import * as SecureStore from "expo-secure-store";
+import { usePushNotifications } from "../hooks/usePushNotifications";
 
 const PrincipalMenu: React.FC = () => {
 	const router = useRouter();
@@ -25,6 +26,7 @@ const PrincipalMenu: React.FC = () => {
 
 	const navigationState = useRootNavigationState(); // Detecta si el router está listo
 	const [newExchangeRate, setNewExchangeRate] = useState(""); // Capturar la tasa de cambio
+	usePushNotifications();
 
 	// useEffect para verificar la tasa de cambio cuando el usuario inicia sesión
 	useEffect(() => {

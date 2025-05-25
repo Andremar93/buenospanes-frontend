@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface User {
+	id: string | null;
 	username: string | null;
 	token: string | null;
 }
@@ -21,11 +22,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
 
 	useEffect(() => {
 		const loadUser = async () => {
+			const storedId = await AsyncStorage.getItem("userId");
 			const storedUsername = await AsyncStorage.getItem("username");
 			const storedToken = await AsyncStorage.getItem("userToken");
 
-			if (storedUsername && storedToken) {
-				setUser({ username: storedUsername, token: storedToken });
+			if (storedId && storedUsername && storedToken) {
+				setUser({ id: storedId, username: storedUsername, token: storedToken });
 			}
 		};
 
@@ -33,9 +35,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
 	}, []);
 
 	const logout = async () => {
-		await AsyncStorage.removeItem("username");
-		await AsyncStorage.removeItem("userToken");
-		setUser({ username: null, token: null });
+		await AsyncStorage.multiRemove(["userId", "username", "userToken"]);
+		setUser({ id: null, username: null, token: null });
 	};
 
 	return (
