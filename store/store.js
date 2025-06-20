@@ -1,6 +1,8 @@
+// store/useStore.ts
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { getExchangeRateByDate, createExchangeRate } from "../services/api";
 
 const storageKey = "app-storage";
@@ -14,15 +16,47 @@ const getFormattedToday = () => {
 const useStore = create(
 	persist(
 		(set, get) => ({
-			username: "",
+			// USER
+			userId: null,
+			username: null,
+			token: null,
+
+			// ESTADO DE TASA
 			exchangeRate: null,
 			lastUpdated: null,
 			loading: false,
 
-			setUsername: (name) => set({ username: name }),
+			// === USER ===
+			setUser: async ({ id, username, token }) => {
+				await SecureStore.setItemAsync("userId", id);
+				await SecureStore.setItemAsync("username", username);
+				await SecureStore.setItemAsync("userToken", token);
+				set({ userId: id, username, token });
+			},
+
+			loadUser: async () => {
+				const id = await SecureStore.getItemAsync("userId");
+				const username = await SecureStore.getItemAsync("username");
+				const token = await SecureStore.getItemAsync("userToken");
+
+				if (id && username && token) {
+					set({ userId: id, username, token });
+				}
+			},
+
+			logout: async () => {
+				await SecureStore.deleteItemAsync("userId");
+				await SecureStore.deleteItemAsync("username");
+				await SecureStore.deleteItemAsync("userToken");
+				set({ userId: null, username: null, token: null });
+				await AsyncStorage.removeItem(storageKey);
+			},
+
+			// === APP ===
 			setLoading: (loading) => set({ loading }),
 
-			setExchangeRate: async (rate, token) => {
+			setExchangeRate: async (rate) => {
+				const token = get().token;
 				try {
 					await createExchangeRate(rate, token);
 					set({
@@ -36,11 +70,11 @@ const useStore = create(
 				}
 			},
 
-			checkExchangeRate: async (token) => {
-				const { lastUpdated } = get();
+			checkExchangeRate: async () => {
+				const { lastUpdated, token } = get();
 				const today = getFormattedToday();
 
-				if (lastUpdated !== today) {
+				if (lastUpdated !== today && token) {
 					set({ loading: true });
 					try {
 						const rateData = await getExchangeRateByDate(
@@ -61,12 +95,13 @@ const useStore = create(
 						set({ loading: false });
 					}
 				}
-				// get().resetStore();
 			},
 
 			resetStore: () => {
 				set({
-					username: "",
+					username: null,
+					userId: null,
+					token: null,
 					exchangeRate: null,
 					lastUpdated: null,
 				});
@@ -76,6 +111,11 @@ const useStore = create(
 		{
 			name: storageKey,
 			storage: createJSONStorage(() => AsyncStorage),
+			partialize: (state) => ({
+				// Solo se persiste lo necesario en AsyncStorage (token sensible va en SecureStore)
+				exchangeRate: state.exchangeRate,
+				lastUpdated: state.lastUpdated,
+			}),
 		},
 	),
 );

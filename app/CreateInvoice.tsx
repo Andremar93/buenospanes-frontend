@@ -29,7 +29,7 @@ const CreateInvoice: React.FC = () => {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const onSubmit = async (data: any) => {
-		if (isSubmitting) return; // Previene múltiples envíos
+		if (isSubmitting) return;
 
 		setIsSubmitting(true);
 
@@ -58,8 +58,8 @@ const CreateInvoice: React.FC = () => {
 				"La factura ha sido registrada correctamente",
 			);
 			console.log("Valores del formulario:", watch());
-			reset(); // Limpia el formulario
-			setDueDate(new Date()); // Reinicia la fecha
+			reset();
+			setDueDate(new Date());
 		} catch (error) {
 			console.error("Error al guardar la factura:", error);
 			Alert.alert("Error", "Hubo un problema al guardar la factura");

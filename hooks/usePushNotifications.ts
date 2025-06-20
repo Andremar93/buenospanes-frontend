@@ -8,27 +8,38 @@ const API_URL = "https://buenospanes-backend-staging.up.railway.app"; // Cambia 
 
 export function usePushNotifications() {
 	const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
-
 	useEffect(() => {
 		const register = async () => {
-			const token = await registerForPushNotificationsAsync();
-			const jwt = await SecureStore.getItemAsync("userToken");
+			try {
+				const token = await registerForPushNotificationsAsync();
+				const jwt = await SecureStore.getItemAsync("userToken");
 
-			if (!token || !jwt) {
-				console.warn("No token de notificación o JWT");
-				return;
+				console.log("📌 Hook usePushNotifications ejecutado");
+				console.log("📲 Token generado:", token);
+				console.log("🔐 JWT recuperado:", jwt);
+
+				if (!token || !jwt) {
+					console.warn("⚠️ Faltan token o JWT");
+					return;
+				}
+
+				setExpoPushToken(token); // ✅ ¡Esto es importante!
+
+				const response = await fetch(`${API_URL}/register-push-token`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${jwt}`,
+					},
+					body: JSON.stringify({ expoPushToken: token }),
+				});
+
+				console.log("📡 Respuesta del backend:", response.status);
+				const responseText = await response.text();
+				console.log("📨 Body de respuesta:", responseText);
+			} catch (error) {
+				console.error("❌ Error durante el registro del token:", error);
 			}
-
-			setExpoPushToken(token);
-
-			await fetch(`${API_URL}/register-push-token`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${jwt}`, // ← JWT real aquí
-				},
-				body: JSON.stringify({ expoPushToken: token }),
-			});
 		};
 
 		register();

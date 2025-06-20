@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { StyleSheet, Alert, TouchableOpacity, Text, Image } from "react-native";
 import { useRouter } from "expo-router";
-import { useUser } from "@/contexts/UserContext";
 import { login } from "../services/api";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedTextInput } from "@/components/ThemedTextInput";
 import * as SecureStore from "expo-secure-store";
-import { usePushNotifications } from "../hooks/usePushNotifications";
+import useStore from "../store/store";
 
 const bpLogo = require("../assets/images/buenos-panes-logo.jpeg");
 
@@ -15,18 +14,13 @@ const LoginForm: React.FC = () => {
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 
-	const { setUser } = useUser();
-	const { user } = useUser();
+	const { user, setUser, token } = useStore();
 	const router = useRouter();
+	const [isReady, setIsReady] = useState(false);
 
 	useEffect(() => {
-		const checkLoginStatus = async () => {
-			if (user.token) {
-				router.replace("/PrincipalMenu");
-			}
-		};
-		checkLoginStatus();
-	}, [user, router]);
+		setIsReady(true);
+	}, []);
 
 	const handleLogin = async () => {
 		if (!username || !password) {
@@ -36,11 +30,14 @@ const LoginForm: React.FC = () => {
 		try {
 			const response = await login(username, password);
 
-			const userData = { username, token: response.token, id: response.user.id };
-			await SecureStore.setItemAsync("userToken", response.token);
-			await SecureStore.setItemAsync("userId", response.user.id);
-			await SecureStore.setItemAsync("username", username);
-			setUser(userData);
+			const userData = {
+				id: response.user.id,
+				username,
+				token: response.token,
+			};
+
+			await setUser(userData); // Esto guarda en SecureStore y actualiza Zustand
+
 			Alert.alert("Éxito", "Inicio de sesión exitoso");
 			router.replace("/PrincipalMenu");
 		} catch (error) {
@@ -54,7 +51,7 @@ const LoginForm: React.FC = () => {
 	return (
 		<ThemedView style={styles.container}>
 			<Image source={bpLogo} style={{ width: 100, height: 100 }} />
-			<ThemedText style={styles.title}>Iniciaaaaaar Sesión</ThemedText>
+			<ThemedText style={styles.title}>Iniciar Sesión</ThemedText>
 			<ThemedTextInput
 				placeholder="Usuario"
 				value={username}

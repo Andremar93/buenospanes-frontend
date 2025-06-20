@@ -12,7 +12,6 @@ import { useRouter } from "expo-router";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { HelloWave } from "@/components/HelloWave";
-import { useUser } from "@/contexts/UserContext";
 import { useRootNavigationState } from "expo-router";
 import menuData from "@/data/menuOptions.json"; // Importar el JSON
 import useStore from "../store/store";
@@ -21,7 +20,7 @@ import { usePushNotifications } from "../hooks/usePushNotifications";
 
 const PrincipalMenu: React.FC = () => {
 	const router = useRouter();
-	const { user } = useUser();
+	const { username, token } = useStore();
 	const { exchangeRate, setExchangeRate, checkExchangeRate } = useStore();
 
 	const navigationState = useRootNavigationState(); // Detecta si el router está listo
@@ -31,7 +30,7 @@ const PrincipalMenu: React.FC = () => {
 	// useEffect para verificar la tasa de cambio cuando el usuario inicia sesión
 	useEffect(() => {
 		if (!navigationState?.key) return; // Espera hasta que el Root Layout esté montado
-		if (!user?.token) {
+		if (!token) {
 			router.replace("/login");
 			return;
 		}
@@ -47,7 +46,7 @@ const PrincipalMenu: React.FC = () => {
 		};
 
 		fetchExchangeRate();
-	}, [navigationState?.key, user?.token]);
+	}, [navigationState?.key, token]);
 
 	const handleSaveExchangeRate = async () => {
 		const rate = parseFloat(newExchangeRate);
@@ -74,7 +73,7 @@ const PrincipalMenu: React.FC = () => {
 		<ThemedView style={styles.container}>
 			<View style={styles.titleContainer}>
 				<ThemedText type="title">
-					Hola {user?.username || "Guest"}!
+					Holas {username || "Guest"}!
 				</ThemedText>
 				<HelloWave />
 			</View>

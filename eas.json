@@ -11,7 +11,10 @@
 			"android": {
 				"buildType": "apk"
 			},
-			"distribution": "internal"
+			"distribution": "internal",
+			"env": {
+				"SENTRY_AUTH_TOKEN": "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"
+			}
 		},
 		"preview": {
 			"distribution": "internal"

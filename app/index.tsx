@@ -4,26 +4,21 @@ import { Button, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { useUser } from "@/contexts/UserContext";
+import useStore from "../store/store";
+
+import * as Sentry from "@sentry/react-native";
 
 export default function IndexScreen() {
 	const [loading, setLoading] = useState(true);
 	// const [isLoggedIn, setIsLoggedIn] = useState(false);
 	const router = useRouter();
-	const { user } = useUser();
+	const { token } = useStore();
 
 	useEffect(() => {
-		const checkLoginStatus = async () => {
-			if (user.token) {
-				// setIsLoggedIn(true);
-				router.replace("/PrincipalMenu"); // Redirige a la pantalla principal si ya está autenticado
-			} else {
-				setLoading(false); // Si no hay sesión, muestra los botones
-			}
-		};
-
-		checkLoginStatus();
-	}, [router, user.token]);
+		if (!token) {
+			setLoading(false);
+		}
+	}, [token]);
 
 	if (loading) {
 		return <ActivityIndicator size="large" color="#0000ff" />;

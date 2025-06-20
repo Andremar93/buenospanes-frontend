@@ -1,40 +1,64 @@
-import {
-	// DarkTheme,
-	DefaultTheme,
-	ThemeProvider,
-} from "@react-navigation/native";
+import * as React from "react";
+import { Slot } from "expo-router";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import "react-native-reanimated";
-import { UserProvider, useUser } from "@/contexts/UserContext"; // Aquí importas el contexto
-import { useColorScheme } from "@/hooks/useColorScheme";
+import { useColorScheme } from "react-native"; // usa el hook de RN directamente
+import * as Sentry from "@sentry/react-native";
+import useStore from "../store/store";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
-import * as Sentry from "sentry-expo";
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { Stack, useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 
-import { useRouter } from "expo-router";
+
 
 Sentry.init({
-	dsn: "https://5e1a5661eed5ebd94a182edf0a9858a8@o4509383973666816.ingest.us.sentry.io/4509383989788672",
-	enableInExpoDevelopment: true,
+	dsn: "https://d041448642b282f000f6c15b642a482f@o4509383973666816.ingest.us.sentry.io/4509384133902336",
+	tracesSampleRate: 1.0,
+	enableNative: true,
 	debug: true,
 });
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
 	const colorScheme = useColorScheme();
+
+
 	const [loaded] = useFonts({
 		SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
 	});
 
-	Sentry.Native.captureException(new Error("Error de prueba"));
+	const token = useStore((state) => state.token);
+	const router = useRouter();
 
 	useEffect(() => {
-		if (loaded) {
+		const prepare = async () => {
+			try {
+				await SplashScreen.preventAutoHideAsync();
+			} catch (e) {
+				console.warn("SplashScreen error:", e);
+			}
+		};
+
+		prepare();
+	}, []);
+
+
+	useEffect(() => {
+		// Espera a que el layout esté montado
+		const timeout = setTimeout(() => {
+			if (!token) {
+				router.replace("/login");
+			} else {
+				router.replace("/PrincipalMenu");
+			}
+		}, 1000);
+
+		return () => clearTimeout(timeout);
+	}, [token]);
+
+	useEffect(() => {
+		if (loaded && SplashScreen.hideAsync) {
 			SplashScreen.hideAsync();
 		}
 	}, [loaded]);
@@ -42,93 +66,81 @@ export default function RootLayout() {
 	if (!loaded) {
 		return null;
 	}
-
 	return (
-		<UserProvider>
-			<ThemeProvider
-				value={colorScheme === "dark" ? DefaultTheme : DefaultTheme}
-			>
-				<Stack>
-					<Stack.Screen
-						name="(tabs)"
-						options={{ headerShown: false }}
-					/>
-					<Stack.Screen
-						name="index"
-						options={{ headerShown: false }}
-					/>
-					<Stack.Screen
-						name="login"
-						options={{
-							headerShown: false,
-						}}
-					/>
-					<Stack.Screen
-						name="CreateExpense"
-						options={{
-							headerShown: true,
-							headerTitle: "Crear Gasto",
-							headerRight: () => <LogoutButton />, // Botón de logout en el header
-						}}
-					/>
-					<Stack.Screen
-						name="CreateInvoice"
-						options={{
-							headerShown: true,
-							headerTitle: "Crear Factura",
-							headerRight: () => <LogoutButton />, // Botón de logout en el header
-						}}
-					/>
-					<Stack.Screen
-						name="SeeExpenses"
-						options={{
-							headerShown: true,
-							headerTitle: "Gastos",
-							headerRight: () => <LogoutButton />, // Botón de logout en el header
-						}}
-					/>
-					<Stack.Screen
-						name="ExpensesResume"
-						options={{
-							headerShown: true,
-							headerTitle: "Resumen",
-							headerRight: () => <LogoutButton />, // Botón de logout en el header
-						}}
-					/>
-					<Stack.Screen
-						name="SeeInvoices"
-						options={{
-							headerShown: true,
-							headerTitle: "Facturas",
-							headerRight: () => <LogoutButton />, // Botón de logout en el header
-						}}
-					/>
-					<Stack.Screen
-						name="MainMenu"
-						options={{
-							headerShown: true,
-							headerTitle: "",
-							headerRight: () => <LogoutButton />, // Botón de logout en el header
-						}}
-					/>
-					<Stack.Screen
-						name="PrincipalMenu"
-						options={{
-							headerShown: true,
-							headerTitle: "",
-							headerRight: () => <LogoutButton />, // Botón de logout en el header
-						}}
-					/>
-					<Stack.Screen
-						name="+not-found"
-						options={{ headerShown: false }}
-					/>
-				</Stack>
-				<StatusBar style="auto" />
-			</ThemeProvider>
-		</UserProvider>
+		<ThemeProvider
+			value={colorScheme === "dark" ? DefaultTheme : DefaultTheme}
+		>
+			<Stack>
+				<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+				<Stack.Screen name="index" options={{ headerShown: false }} />
+				<Stack.Screen name="login" options={{ headerShown: false }} />
+				<Stack.Screen
+					name="CreateExpense"
+					options={{
+						headerShown: true,
+						headerTitle: "Crear Gasto",
+						headerRight: () => <LogoutButton />,
+					}}
+				/>
+				<Stack.Screen
+					name="CreateInvoice"
+					options={{
+						headerShown: true,
+						headerTitle: "Crear Factura",
+						headerRight: () => <LogoutButton />,
+					}}
+				/>
+				<Stack.Screen
+					name="SeeExpenses"
+					options={{
+						headerShown: true,
+						headerTitle: "Gastos",
+						headerRight: () => <LogoutButton />,
+					}}
+				/>
+				<Stack.Screen
+					name="ExpensesResume"
+					options={{
+						headerShown: true,
+						headerTitle: "Resumen",
+						headerRight: () => <LogoutButton />,
+					}}
+				/>
+				<Stack.Screen
+					name="SeeInvoices"
+					options={{
+						headerShown: true,
+						headerTitle: "Facturas",
+						headerRight: () => <LogoutButton />,
+					}}
+				/>
+				<Stack.Screen
+					name="MainMenu"
+					options={{
+						headerShown: true,
+						headerTitle: "",
+						headerRight: () => <LogoutButton />,
+					}}
+				/>
+				<Stack.Screen
+					name="PrincipalMenu"
+					options={{
+						headerShown: true,
+						headerTitle: "",
+						headerRight: () => <LogoutButton />,
+					}}
+				/>
+				<Stack.Screen
+					name="+not-found"
+					options={{ headerShown: false }}
+				/>
+			</Stack>
+			<StatusBar style="auto" />
+		</ThemeProvider>
 	);
-}
+
+});
+
 
 const styles = StyleSheet.create({
 	button: {
@@ -146,14 +158,13 @@ const styles = StyleSheet.create({
 	},
 });
 
-// Este componente se encargará de manejar el logout dentro del contexto de UserProvider
+// Componente de botón para cerrar sesión
 const LogoutButton = () => {
-	const { logout } = useUser();
-
 	const router = useRouter();
 
 	const handleLogout = () => {
-		logout();
+		console.log("click on logout");
+		useStore.getState().logout();
 		router.replace("/login");
 	};
 
